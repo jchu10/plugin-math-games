@@ -1,9 +1,12 @@
 {
-    "extends": "@jspsych/config/tsconfig.contrib.json",
-    "compilerOptions": {
-      "baseUrl": ".",
-      "resolveJsonModule": true
-    },
-    "include": ["src"]
-  }
-  
+  "extends": "@jspsych/config/tsconfig.contrib.json",
+  "compilerOptions": {
+    "jsx": "react",
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+  },
+  "include": [ "src" ]
+}
