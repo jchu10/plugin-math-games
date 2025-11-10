@@ -1,0 +1,66 @@
+{
+  "name": "plugin-math-games",
+  "version": "0.0.1",
+  "description": "This plugin displays math games. The games can be displayed until a button response is given, or for a fixed length of time.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
+  "typings": "dist/index.d.ts",
+  "unpkg": "dist/index.browser.min.js",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "source": "src/index.ts",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "npm test -- --watch",
+    "tsc": "tsc",
+    "build": "rollup --config",
+    "build:watch": "npm run build -- --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "",
+    "directory": "./"
+  },
+  "keywords": [
+    "jsPsych"
+  ],
+  "author": {
+    "name": "Junyi Chu",
+    "url": "https://github.com/jchu10"
+  },
+  "license": "MIT",
+  "licenseUrl": "http://www.opensource.org/licenses/mit-license.php",
+  "bugs": {
+    "url": "/issues"
+  },
+  "homepage": "/plugin-math-games/README.md",
+  "dependencies": {
+    "@citation-js/core": "^0.7.14",
+    "@citation-js/plugin-bibtex": "^0.7.14",
+    "@citation-js/plugin-cff": "^0.6.1",
+    "@citation-js/plugin-software-formats": "^0.6.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "jspsych": "^8.2.2",
+    "phaser": "^3.90.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-native": "^0.82.1",
+    "react-native-web": "^0.21.2",
+    "terser": "^5.44.1"
+  },
+  "devDependencies": {
+    "@jspsych/config": "^3.2.2",
+    "@jspsych/test-utils": "^1.0.0",
+    "@types/react-native-web": "^0.19.1",
+    "@vitejs/plugin-react": "^4.6.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.3.1"
+  }
+}

@@ -1,0 +1,7 @@
+{
+    "game_version": "MoonMissionGame",
+    "game_id": "Game1",
+    "controls": "arrowKeys",
+    "hint_type": "powerup",
+    "feedback_type": "explosion"
+}

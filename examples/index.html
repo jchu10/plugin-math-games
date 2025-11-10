@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>jsPsych-math-games Example</title>
+  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/jspsych@8.22"></script>
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
+
+  <script src="../dist/index.browser.js"></script>
+  <!-- <script src="https://unpkg.com/plugin-math-games"></script> -->
+  <!-- <script src="../dist/index.global.js"></script> -->
+</head>
+
+<body>
+
+  <div id="jspsych-target"></div>
+
+  <script>
+    // initialize jsPsych
+    const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
+
+    // list your trial JSON files here
+    const trialFiles = [
+      'trials/trial1.json',
+      'trials/trial2.json',
+      'trials/trial3.json',
+    ];
+
+    // load every JSON, then map to plugin-defined trials
+    Promise.all(trialFiles.map(path =>
+      fetch(path).then(res => res.json())
+    )).then(configs => {
+      const trials = configs.map(cfg => ({
+        type: MathGamesPlugin,
+        game_version: cfg.game_version,
+        game_id: cfg.game_id,
+        controls: cfg.controls,
+        hint_type: cfg.hint_type,
+        feedback_type: cfg.feedback_type
+      }));
+
+      // run all trials in sequence
+      jsPsych.run(trials);
+    });
+  </script>
+
+</body>
+
+</html>

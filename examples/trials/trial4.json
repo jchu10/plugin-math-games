@@ -1,0 +1,7 @@
+{
+    "game_version": "HomeworkHelpGame",
+    "game_id": "Game16",
+    "controls": "tapToSelect",
+    "hint_type": "stepByStep",
+    "feedback_type": "explanation"
+}

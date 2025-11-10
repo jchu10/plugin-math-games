@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Junyi Chu"
+    given-names: "Junyi Chu"
+    name-particle: "Junyi Chu"
+    orcid: "https://orcid.org/0000-0003-2778-6317"
+# More  authors can be listed here in the same format as above
+contact: # Contact person for this extension
+  - family-names: "Junyi Chu"
+    given-names: "Junyi Chu"
+    email: "junyichu10@gmail.com"
+    orcid: "https://orcid.org/0000-0003-2778-6317"
+title: "jsPsychPluginMathGames"
+version: 0.0.0
+doi: NA # Replace with DOI
+date-released: NA
+url: "github.com/jchu10/plugin-math-games" # Replace with URL to this extension
