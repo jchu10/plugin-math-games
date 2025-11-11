@@ -36,7 +36,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
 
         // The 'launchGame' function will create the Phaser game
         // and attach it to the div with ID PHASER_CONTAINER_ID
-        gameRef.current = launchGame(PHASER_CONTAINER_ID, gameConfig[0]);
+        gameRef.current = launchGame(PHASER_CONTAINER_ID, gameConfig);
 
         // --- This is the bridge from Phaser to React ---
         // Listen for custom events from the Phaser game
@@ -94,7 +94,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
                     correctCount: payload.correctCount,
                     lives: payload.lives,
                     duration: payload.duration,
-                    config: gameConfig[0],
+                    config: gameConfig,
                 },
             };
 

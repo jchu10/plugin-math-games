@@ -7,6 +7,16 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
+    "skipLibCheck": true // Add this line
   },
-  "include": [ "src" ]
+  "include": [
+    "src/**/*",
+    "src/**/*.tsx",
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build"
+  ]
 }
