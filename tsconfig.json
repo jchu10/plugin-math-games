@@ -1,7 +1,7 @@
 {
   "extends": "@jspsych/config/tsconfig.contrib.json",
   "compilerOptions": {
-    "jsx": "react",
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "resolveJsonModule": true,
     "esModuleInterop": true,

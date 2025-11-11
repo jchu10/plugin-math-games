@@ -1,5 +1,3 @@
-import React from "react";
-// import ReactDOM from "react-dom";
 import { createRoot } from "react-dom/client";
 import type { JsPsych } from "jspsych";
 import type { GameConfig } from "./core/types";

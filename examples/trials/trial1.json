@@ -1,5 +1,5 @@
 {
-    "game_version": "MoonMissionGame",
+    "cover_story": "MoonMissionGame",
     "game_id": "Game1",
     "controls": "arrowKeys",
     "hint_type": "powerup",

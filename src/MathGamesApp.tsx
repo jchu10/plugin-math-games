@@ -6,16 +6,16 @@
 // 5. Listen for events from the Phaser game to update its own state.
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Response, GameState, GameConfig } from './core/types';
+import { Response, GameState, GameConfig, LogEvent } from './core/types';
 import { launchGame } from './core/game';
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 
 const PHASER_CONTAINER_ID = 'phaser-game-container';
 const CONFIG_FILE_PATH = '/config/game1.json'; // read in from jspsych
 
 interface MathGamesAppProps {
   gameConfig: GameConfig;
-  onFinish: (data: { events: any[] }) => void;
+  onFinish: (data: { events: any[]; summary?: any }) => void;
 }
 
 export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish }) => {
@@ -24,105 +24,162 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
     
     // A ref to hold the Phaser game instance
     const gameRef = useRef<Phaser.Game | null>(null);
+    // Ref to collect history events emitted from Phaser
+    const eventsRef = useRef<LogEvent[]>([]);
+
     // This effect runs once on component mount to launch the game
     useEffect(() => {
         // Only launch if the game isn't already running
         if (gameRef.current) {
             return () => {}; // Return empty cleanup function
         }
-        
+
         // The 'launchGame' function will create the Phaser game
         // and attach it to the div with ID PHASER_CONTAINER_ID
         gameRef.current = launchGame(PHASER_CONTAINER_ID, gameConfig[0]);
-        
+
         // --- This is the bridge from Phaser to React ---
         // Listen for custom events from the Phaser game
         const gameEvents = gameRef.current.events;
-        
-        gameEvents.on('MathResponse', (result: Response) => {
+
+        const onMathResponse = (result: Response & { timestamp?: number; elapsed?: number }) => {
             console.log('React received answer result:', result);
-            // TODO: Update React's state based on the game event
-        });
-        
-        gameEvents.on('gameOver', () => {
-            setGameState(GameState.GameOver);
-        });
-        // --- End of bridge ---
-        
-        return () => {
-            // On component unmount, destroy the game
-            gameRef.current?.destroy(true);
-            gameRef.current = null;
+            // Update React state and record event
+            const ev: LogEvent = {
+                timestamp: result.timestamp ?? Date.now(),
+                eventType: 'make_response',
+                payload: result,
+            };
+            eventsRef.current.push(ev);
+            setScore(prev => {
+                // If isCorrect, increase; otherwise leave as-is (or adjust as desired)
+                return result.isCorrect ? prev + 10 : prev;
+            });
         };
-    }, []); // Empty dependency array ensures this runs only once
-    
+
+        const onQuestionShown = (payload: any) => {
+            const ev: LogEvent = {
+                timestamp: Date.now(),
+                eventType: 'question_shown',
+                payload,
+            };
+            eventsRef.current.push(ev);
+        };
+
+        const onHintUsed = (payload: any) => {
+            const ev: LogEvent = {
+                timestamp: Date.now(),
+                eventType: 'request_hint',
+                payload,
+            };
+            eventsRef.current.push(ev);
+        };
+
+        const onGameOver = (payload: any) => {
+            // Add a final synthetic event if needed
+            const finalEv: LogEvent = {
+                timestamp: Date.now(),
+                eventType: 'game_over',
+                payload,
+            };
+            eventsRef.current.push(finalEv);
+
+            setGameState(GameState.GameOver);
+
+            // Prepare enriched payload for jsPsych
+            const finishPayload = {
+                events: eventsRef.current,
+                summary: {
+                    score: payload.score,
+                    correctCount: payload.correctCount,
+                    lives: payload.lives,
+                    duration: payload.duration,
+                    config: gameConfig[0],
+                },
+            };
+
+            onFinish(finishPayload);
+        };
+
+        // Register listeners
+        gameEvents.on('QuestionShown', onQuestionShown);
+        gameEvents.on('MathResponse', onMathResponse);
+        gameEvents.on('HintUsed', onHintUsed);
+        gameEvents.on('ShowFeedback', onHintUsed);
+        gameEvents.on('GameOver', onGameOver);
+        gameEvents.on('EndGame', onGameOver);
+
+        // cleanup on unmount
+        return () => {
+            try {
+                gameEvents.off('QuestionShown', onQuestionShown);
+                gameEvents.off('MathResponse', onMathResponse);
+                gameEvents.off('HintUsed', onHintUsed);
+                gameEvents.off('ShowFeedback', onHintUsed);
+                gameEvents.off('GameOver', onGameOver);
+                gameEvents.off('EndGame', onGameOver);
+            } catch (e) {
+                // ignore if already destroyed
+            }
+            if (gameRef.current) {
+                // destroy Phaser instance to free resources
+                gameRef.current.destroy(true);
+                gameRef.current = null;
+            }
+        };
+    }, [gameConfig, onFinish]);
+
     return (
         <div style={{
-            position: "fixed",
-            top: 0, left: 0, right: 0, bottom: 0,
-            // backgroundImage: `url(${bgImage})`,
-            backgroundSize:   "cover",
-            backgroundPosition: "center",
-            backgroundRepeat:  "no-repeat",
             display: "flex",
-            alignItems: "center",
             justifyContent: "center",
-        }}>
-        <div 
-        className="app-wrapper"
-        style={{
-            maxWidth: "40%",
-            display: "flex",
             alignItems: "center",
-            justifyContent: "center",
             height: "100%",
+            width: "100%",
         }}>
-        <div 
-        className="game-container"
-        style={{
-            display: "inline-block",
-            textAlign: "center",
-            background: "rgba(255,255,255,0.6)",
-            backdropFilter: "blur(10px)",
-            padding: "2rem",
-            borderRadius: "12px",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-        }}
-                >
-                    <h1
-            className="ws-header"
-            style={{
-              display: 'inline-block',
-              marginBottom: '1.2rem',
-              maxWidth: '90%',
-              fontSize: 20,
-              wordBreak: 'break-word',
-            }}
-                    >
-            Shoot the correct asteroids to collect stars~
-          </h1>
-        <h2>Score: {score}</h2>
-        
-        {/* This is the div Phaser will attach to */}
-        <div id={PHASER_CONTAINER_ID} />
-        </div>
-        
-        {gameState === GameState.GameOver && (
-            <div className="game-over-screen">
-            <h2>Game Over!</h2>
-            <p>Your final score is: {score}</p>
-            <button onClick={() => {
-                // Tell Phaser to restart
-                gameRef.current?.events.emit('restartGame');
-                setScore(0);
-                setGameState(GameState.Playing);
+            <div style={{
+                display: "inline-block",
+                textAlign: "center",
+                background: "rgba(255,255,255,0.6)",
+                backdropFilter: "blur(10px)",
+                padding: "2rem",
+                borderRadius: "12px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             }}>
-            Play Again
-            </button>
+                <h1
+                    className="ws-header"
+                    style={{
+                        display: 'inline-block',
+                        marginBottom: '1.2rem',
+                        maxWidth: '90%',
+                        fontSize: 20,
+                        wordBreak: 'break-word',
+                    }}
+                >
+                    Shoot the correct asteroids to collect stars~
+                </h1>
+                <h2>Score: {score}</h2>
+                {/* This is the div Phaser will attach to */}
+                <div id={PHASER_CONTAINER_ID} />
             </div>
-        )}
+
+            {gameState === GameState.GameOver && (
+                <div className="game-over-screen">
+                    <h2>Game Over!</h2>
+                    <p>Your final score is: {score}</p>
+                    <button onClick={() => {
+                        // Tell Phaser to restart
+                        gameRef.current?.events.emit('restartGame');
+                        eventsRef.current = []; // clear collected events for fresh run
+                        setScore(0);
+                        setGameState(GameState.Playing);
+                    }}>
+                        Play Again
+                    </button>
+                </div>
+            )}
         </div>
-        </div>);
+    );
 };
 
 export default MathGamesApp;

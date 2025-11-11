@@ -20,11 +20,13 @@
     "test:watch": "npm test -- --watch",
     "tsc": "tsc",
     "build": "rollup --config",
-    "build:watch": "npm run build -- --watch"
+    "build:watch": "npm run build -- --watch",
+    "type-check": "tsc --noEmit",
+    "dev": "vite"
   },
   "repository": {
     "type": "git",
-    "url": "",
+    "url": "git+https://github.com/jchu10/plugin-math-games.git",
     "directory": "./"
   },
   "keywords": [
@@ -35,7 +37,6 @@
     "url": "https://github.com/jchu10"
   },
   "license": "MIT",
-  "licenseUrl": "http://www.opensource.org/licenses/mit-license.php",
   "bugs": {
     "url": "/issues"
   },
@@ -45,21 +46,25 @@
     "@citation-js/plugin-bibtex": "^0.7.14",
     "@citation-js/plugin-cff": "^0.6.1",
     "@citation-js/plugin-software-formats": "^0.6.1",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
     "jspsych": "^8.2.2",
     "phaser": "^3.90.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-native": "^0.82.1",
-    "react-native-web": "^0.21.2",
     "terser": "^5.44.1"
   },
   "devDependencies": {
     "@jspsych/config": "^3.2.2",
     "@jspsych/test-utils": "^1.0.0",
-    "@types/react-native-web": "^0.19.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-url": "^8.0.2",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^4.6.0",
+    "identity-obj-proxy": "^3.0.0",
+    "phaser3spectorjs": "^0.0.8",
+    "rollup-plugin-postcss": "^4.0.2",
+    "ts-jest": "^29.4.5",
     "typescript": "~5.7.2",
     "vite": "^6.3.1"
   }

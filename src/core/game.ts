@@ -1,6 +1,6 @@
 // A small launcher file that wires up a Phaser config and export a launchGame function that MathGamesApp.tsx can call to start the game.
 
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { GameScene } from './GameScene';
 import { GameConfig } from '../core/types';
 

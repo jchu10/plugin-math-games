@@ -1,17 +1,15 @@
 /// Types used in the Math Games plugin.
 /// No logic and no imports. Defines the shape of data structures.
 
-export type ActionType = "answer" | "hint" | "start" | "end" | "feedback" | "timeout";
+export type EventType = "question_shown" | "make_response" | "request_hint" | "start_game" | "end_game" | "display_feedback" | "navigate_feedback" | "game_over";
 /**
  * A single user action: either select answer or get hint,
  * with question, accuracy, and a timestamp.
 */
-export interface HistoryEvent {
-  type: ActionType;
-  question: MathQuestion;
-  response: Response;
+export interface LogEvent {
   timestamp: number;
-  description: string;
+  eventType: EventType;
+  payload: any;
 }
 
 // The difficulty levels for questions
@@ -52,15 +50,13 @@ export type feedbackType = "none" | "explosion" | "correctHighlight";
 export type questionSequence = "staircase" | "random";
 
 export interface GameConfig {
-  /** ID of the game configuration */
-  id: number;
-  game_version: gameVersion;
+  cover_story: gameVersion;
   controls: gameControls;
   hint_type: hintType;
   feedback_type: feedbackType;
   time_limit: number; // time limit in seconds
   difficulty: QuestionDifficulty; // initial math difficulty
-  nextDifficulty: questionSequence; // how to adjust difficulty
+  question_sequence_logic: questionSequence; // how to adjust difficulty
 
 }
 

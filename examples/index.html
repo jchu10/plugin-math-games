@@ -3,13 +3,12 @@
 
 <head>
   <title>jsPsych-math-games Example</title>
-  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/jspsych@8.22"></script>
+  <script src="https://unpkg.com/jspsych@8.2.2"></script>
   <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
 
   <script src="../dist/index.browser.js"></script>
   <!-- <script src="https://unpkg.com/plugin-math-games"></script> -->
-  <!-- <script src="../dist/index.global.js"></script> -->
 </head>
 
 <body>
@@ -19,6 +18,12 @@
   <script>
     // initialize jsPsych
     const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
+
+    const hello_trial = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: 'Hello world! Press any key to begin the math game trials.',
+      choices: ['Begin']
+    }
 
     // list your trial JSON files here
     const trialFiles = [
@@ -32,16 +37,15 @@
       fetch(path).then(res => res.json())
     )).then(configs => {
       const trials = configs.map(cfg => ({
-        type: MathGamesPlugin,
-        game_version: cfg.game_version,
-        game_id: cfg.game_id,
+        type: jsPsychPluginMathGames,
+        cover_story: cfg.cover_story,
         controls: cfg.controls,
         hint_type: cfg.hint_type,
         feedback_type: cfg.feedback_type
       }));
 
       // run all trials in sequence
-      jsPsych.run(trials);
+      jsPsych.run([hello_trial, ...trials]);
     });
   </script>
 

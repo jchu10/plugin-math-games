@@ -1,6 +1,6 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { MathQuestionService } from './mathquestions';
-import { MathQuestion, Response, TrialConfig, GameConfig, HistoryEvent } from './types';
+import { MathQuestion, Response, TrialConfig, GameConfig, LogEvent } from './types';
 
 export class GameScene extends Phaser.Scene {
     private gameConfig!: GameConfig;
@@ -55,12 +55,16 @@ export class GameScene extends Phaser.Scene {
     private gameAreaX!: number;
     private gameAreaY!: number;
 
+    // Timing and history tracking
+    private startTimestamp: number = 0;
+    private LogEvents: LogEvent[] = [];
+
     constructor() {
         super('GameScene');
     }
 
     // The 'init' method receives data passed from 'scene.start'
-    public init(data: TrialConfig['game_setting'][0]) {
+    public init(data: GameConfig) {
         console.log('GameScene initializing with config:', data);
         this.gameConfig = data;
     }
@@ -74,13 +78,13 @@ export class GameScene extends Phaser.Scene {
         this.load.image('powerup', 'powerup.png');
         this.load.image('powertool', 'powertool.png');
 
-        if (this.gameConfig.game_version === 'MoonMissionGame') {
+        if (this.gameConfig.cover_story === 'MoonMissionGame') {
             this.load.image('starrynight', 'starrynight.png');
             this.load.image('spaceship', 'spaceship.png');
             this.load.image('asteroid1', 'asteroid1.png');
             this.load.image('asteroid2', 'asteroid2.png');
             this.load.image('asteroid3', 'asteroid3.png');
-        } else if (this.gameConfig.game_version === 'HomeworkHelperGame') {
+        } else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
             this.load.image('classroom', 'classroom.png');
             this.load.image('thoughtbubble', 'thoughtbubble.png');
             this.load.image('thoughtbubble2', 'thoughtbubble2.png');
@@ -110,10 +114,22 @@ export class GameScene extends Phaser.Scene {
     }
 
     create() {
-        console.log(`Starting game version: ${this.gameConfig.game_version}`);
-
         this.questionService = new MathQuestionService();
+        this.startTimestamp = Date.now(); // Record start time for elapsed/duration calculations
 
+        // Reset state ----
+        this.score = 0;
+        this.correctCount = 0;
+        this.lives = 3;
+        this.timer = 120;
+        this.gameOver = false;
+        this.transitioning = false;
+        this.lastTimerUpdate = 0;
+        this.hintUses = 0;
+        this.hintUsedThisQuestion = false;
+        this.hintActive = false;
+
+        // ---- Game layout ----
         // Calculate square game area dimensions
         this.calculateGameArea();
 
@@ -155,13 +171,22 @@ export class GameScene extends Phaser.Scene {
             this.heartIcons.push(heart);
         }
 
-        // --- End Game button moved to TOP-LEFT on white bar ---
+        // End Game button (top left of game area)
         const endBtn = this.add.text(this.gameAreaX + 30, this.gameAreaY + barHeight / 2, 'End Game', {
             font: '22px Arial', color: '#ffffff', backgroundColor: '#2d3a4a',
             padding: { left: 16, right: 16, top: 8, bottom: 8 }
         }).setOrigin(0, 0.5).setDepth(1002).setInteractive();
         endBtn.on('pointerdown', () => {
-            this.scene.start('GameOver', { score: this.score });
+            // Emit an event with final summary before leaving
+            const finalPayload = {
+                score: this.score,
+                correctCount: this.correctCount,
+                lives: this.lives,
+                duration: Date.now() - this.startTimestamp,
+                history: this.LogEvents,
+            };
+            this.events.emit('EndGame', finalPayload);
+            this.scene.start('EndGame', { score: this.score });
         });
 
         // Timer (top right of game area)
@@ -175,15 +200,19 @@ export class GameScene extends Phaser.Scene {
             padding: { left: 20, right: 20, top: 10, bottom: 10 }, align: 'center'
         }).setOrigin(0.5).setDepth(1003);
 
-        // Hint button will be created after game state initialization
+        // TODO: Hint button will be created after game state initialization
 
         // Init asteroid group
         this.asteroids = this.physics.add.group();
 
         // Spaceship - positioned within game area
-        this.spaceship = this.add.image(this.gameAreaX + this.gameAreaSize / 2, this.gameAreaY + this.gameAreaHeight - 40, 'spaceship')
-            .setOrigin(0.5, 1).setScale(0.24).setDepth(200); // Reduced from 0.32 to 0.24, high depth
-        // Spaceship is now visible within the game area
+        if (this.gameConfig.controls === 'arrowKeys') {
+            this.spaceship = this.add.image(this.gameAreaX + this.gameAreaSize / 2, this.gameAreaY + this.gameAreaHeight - 40, 'spaceship')
+                .setOrigin(0.5, 1).setScale(0.24).setDepth(200); // Reduced from 0.32, high depth
+            this.shipVel = 0;
+        } else if (this.gameConfig.controls === 'tapToSelect') {
+            // TODO - no spaceship
+        }
 
         // Create clipping border slightly above spaceship/pencil within game area
         this.clippingBorderY = this.gameAreaY + this.gameAreaHeight - 80; // 40 pixels above spaceship/pencil
@@ -195,22 +224,7 @@ export class GameScene extends Phaser.Scene {
         // Laser group ----
         this.laserGroup = this.physics.add.group();
 
-        // Reset state
-        this.score = 0;
-        this.correctCount = 0;
-        this.lives = 3;
-        this.timer = 120;
-        this.gameOver = false;
-        this.transitioning = false;
-        this.lastTimerUpdate = 0;
-        this.shipVel = 0;
-        this.hintUses = 0;
-        this.hintUsedThisQuestion = false;
-        this.hintActive = false;
-
-        // Hint button will be created after first question is loaded
-
-        // -------- Progress bar: left side between hearts and power-up within game area --------
+        // ----Progress bar: left side between hearts and power-up within game area ----
         // Make it slightly shorter and closer to the left border
         const topOfBar = heartY + heartSize + 30;      // was +20
         const bottomOfBar = this.gameAreaY + this.gameAreaHeight - 100;   // was -80
@@ -229,10 +243,11 @@ export class GameScene extends Phaser.Scene {
 
         // Update question text
         this.questionText.setText(this.currentQuestion.question);
+
+        // Emit a QuestionShown event
+        this.events.emit('QuestionShown', this.currentQuestion);
     }
 
-
-    ///// OLD CODE BELOW /////
     private calculateGameArea() {
         // Calculate rectangle dimensions: height is 80% of screen height, width is 1.5x the height
         this.gameAreaHeight = Math.floor(this.scale.height * 0.8);
@@ -244,7 +259,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private handleAnswer(asteroid: Phaser.Physics.Arcade.Image, isCorrect: boolean) {
-        // TODO
+        // Keep previous behavior but ensure history + timestamps are recorded
         this.lastAnswerCorrect = !isCorrect;
         if (isCorrect) {
             this.correctCount++;
@@ -256,14 +271,17 @@ export class GameScene extends Phaser.Scene {
                 console.log('Correct answer highlighted!');
             }
         } else {
-            // this.loseLife();
+            this.lives = Math.max(0, this.lives - 1);
         }
 
-        // --- Bridge from Phaser to React ---
-        const response: Response = {
+        // Emit a MathResponse event
+        const responseTimestamp = Date.now();
+        const response: Response & { timestamp: number; elapsed: number } = {
             question: this.currentQuestion,
             selectedAnswer: isCorrect ? this.currentQuestion.correctAnswer : -1, // -1 for incorrect
-            isCorrect: isCorrect
+            isCorrect: isCorrect,
+            timestamp: responseTimestamp,
+            elapsed: responseTimestamp - this.startTimestamp,
         };
         this.events.emit('MathResponse', response);
         // --- End of bridge ---
@@ -271,18 +289,31 @@ export class GameScene extends Phaser.Scene {
         // Check for game over condition ----
         if (this.lives <= 0) {
             this.gameOver = true;
+            // Emit GameOver with final payload
+            const finalPayload = {
+                score: this.score,
+                correctCount: this.correctCount,
+                lives: this.lives,
+                duration: Date.now() - this.startTimestamp,
+                history: this.LogEvents,
+            };
+            this.events.emit('GameOver', finalPayload);
             this.scene.start('GameOver', { score: this.score });
+            return;
         }
 
         // Move to next question after a short delay
         this.time.delayedCall(500, () => {
-            // this.nextQuestion();
+            this.showNextQuestion();
         });
 
     }
 
     private restartGame() {
         console.log('Restarting game...');
+        // Clear history and reset timestamp
+        this.LogEvents = [];
+        this.startTimestamp = Date.now();
         this.scene.restart(this.gameConfig);
     }
 
@@ -299,17 +330,25 @@ export class GameScene extends Phaser.Scene {
                 } else {
                     this.timerText.setText('0:00');
                     this.gameOver = true;
+                    // Emit GameOver payload and start GameOver scene
+                    const finalPayload = {
+                        score: this.score,
+                        correctCount: this.correctCount,
+                        lives: this.lives,
+                        duration: Date.now() - this.startTimestamp,
+                        history: this.LogEvents,
+                    };
+                    this.events.emit('GameOver', finalPayload);
                     this.scene.start('GameOver', { score: this.score });
                 }
             }
         }
 
-        // Move asteroid labels with asteroids and keep them within game boundaries
+        // TODO: Move asteroid labels with asteroids and keep them within game boundaries
 
+        // TODO: Ship movement
 
-        // Ship movement
-
-        // Laser movement + overlap
+        // TODO: Laser movement + overlap
 
     }
 }
