@@ -1,7 +1,6 @@
 {
     "cover_story": "MoonMissionGame",
-    "game_id": "Game1",
     "controls": "arrowKeys",
-    "hint_type": "powerup",
+    "hint_type": "none",
     "feedback_type": "explosion"
 }

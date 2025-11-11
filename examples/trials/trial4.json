@@ -1,6 +1,5 @@
 {
-    "cover_story": "HomeworkHelpGame",
-    "game_id": "Game16",
+    "cover_story": "HomeworkHelperGame",
     "controls": "tapToSelect",
     "hint_type": "stepByStep",
     "feedback_type": "correctHighlight"

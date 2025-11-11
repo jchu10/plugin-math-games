@@ -9,7 +9,7 @@ const info = <const>{
   version: version,
   parameters: {
     preamble: {
-      type: ParameterType.STRING,
+      type: ParameterType.HTML_STRING,
       default: "<p>Welcome to the Math Games!</p><p>In this game, you will answer as many math questions as you can within the time limit. Try to get as many correct as possible!</p>",
     },
     /** Cover story of the game */

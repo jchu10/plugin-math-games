@@ -25,28 +25,47 @@
       choices: ['Begin']
     }
 
-    // list your trial JSON files here
-    const trialFiles = [
-      'trials/trial1.json',
-      'trials/trial2.json',
-      'trials/trial3.json',
-    ];
+    // jsPsych.run(hello_trial);
 
-    // load every JSON, then map to plugin-defined trials
-    Promise.all(trialFiles.map(path =>
-      fetch(path).then(res => res.json())
-    )).then(configs => {
-      const trials = configs.map(cfg => ({
-        type: jsPsychPluginMathGames,
-        cover_story: cfg.cover_story,
-        controls: cfg.controls,
-        hint_type: cfg.hint_type,
-        feedback_type: cfg.feedback_type
-      }));
+    // // list your trial JSON files here
+    // const trialFiles = [
+    //   'trials/trial1.json',
+    //   'trials/trial2.json',
+    //   'trials/trial3.json',
+    // ];
 
-      // run all trials in sequence
-      jsPsych.run([hello_trial, ...trials]);
-    });
+    // // load every JSON, then map to plugin-defined trials
+    // Promise.all(trialFiles.map(path =>
+    //   fetch(path).then(res => res.json())
+    // )).then(configs => {
+    //   const trials = configs.map(cfg => ({
+    //     type: jsPsychPluginMathGames,
+    //     cover_story: cfg.cover_story,
+    //     controls: cfg.controls,
+    //     hint_type: cfg.hint_type,
+    //     feedback_type: cfg.feedback_type
+    //   }));
+    // });
+
+    // jsPsych.run([hello_trial, ...trials]);
+
+    stim = {
+      "cover_story": "MoonMissionGame",
+      "controls": "arrowKeys",
+      "hint_type": "none",
+      "feedback_type": "explosion"
+    }
+    const trial =
+    {
+      type: jsPsychPluginMathGames,
+      cover_story: stim.cover_story,
+      controls: stim.controls,
+      hint_type: stim.hint_type,
+      feedback_type: stim.feedback_type
+    }
+    jsPsych.run([hello_trial, trial]);
+
+
   </script>
 
 </body>
