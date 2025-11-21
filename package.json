@@ -46,6 +46,7 @@
     "@citation-js/plugin-bibtex": "^0.7.14",
     "@citation-js/plugin-cff": "^0.6.1",
     "@citation-js/plugin-software-formats": "^0.6.1",
+    "commonjs": "^0.0.1",
     "jspsych": "^8.2.2",
     "phaser": "^3.90.0",
     "react": "^19.2.0",

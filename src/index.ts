@@ -1,4 +1,4 @@
-import "./index.css"
+// import "./index.css"
 import { JsPsych, JsPsychPlugin, ParameterType, TrialType } from "jspsych";
 
 import { version } from "../package.json";
@@ -104,3 +104,18 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
 }
 
 export default MathGamesPlugin;
+
+// declare global {
+//   interface Window {
+//     jsPsych?: {
+//       plugins: Record<string, any>;
+//     };
+//   }
+// }
+
+// if (typeof window !== "undefined") {
+//   // Attach the plugin to the global jsPsych object if it exists
+//   if (window.jsPsych) {
+//     window.jsPsych.plugins["MathGamesPlugin"] = MathGamesPlugin;
+//   }
+// }
