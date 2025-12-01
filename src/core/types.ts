@@ -37,7 +37,7 @@ export interface Response {
 }
 
 // For the React app to know what's happening
-export enum GameState {
+export enum ReactGameState {
   MainMenu,
   Playing,
   GameOver,
@@ -45,8 +45,8 @@ export enum GameState {
 
 export type gameVersion = "MoonMissionGame" | "HomeworkHelperGame";
 export type gameControls = "arrowKeys" | "tapToSelect";
-export type hintType = "none" | "multipleChoice" | "stepByStep";
-export type feedbackType = "none" | "explosion" | "correctHighlight";
+export type hintType = "none" | "powerup" | "stepByStep";
+export type feedbackType = "none" | "explosion" | "explanation";
 export type questionSequence = "staircase" | "random";
 
 export interface GameConfig {
@@ -57,7 +57,6 @@ export interface GameConfig {
   time_limit: number; // time limit in seconds
   difficulty: QuestionDifficulty; // initial math difficulty
   question_sequence_logic: questionSequence; // how to adjust difficulty
-
 }
 
 /**
@@ -67,4 +66,4 @@ export interface GameConfig {
 export interface TrialConfig {
   /** Initial array of game configurations for this trial */
   game_setting: GameConfig[];
-}
+}            

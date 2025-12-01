@@ -26,39 +26,18 @@
 
         const hello_trial = {
             type: jsPsychHtmlButtonResponse,
-            stimulus: 'Hello world! Press any key to begin the math game trials.',
+            stimulus: 'Press begin to start the math game trials.',
             choices: ['Begin']
         }
 
-        // jsPsych.run(hello_trial);
-
-        // // list your trial JSON files here
-        // const trialFiles = [
-        //   'trials/trial1.json',
-        //   'trials/trial2.json',
-        //   'trials/trial3.json',
-        // ];
-
-        // // load every JSON, then map to plugin-defined trials
-        // Promise.all(trialFiles.map(path =>
-        //   fetch(path).then(res => res.json())
-        // )).then(configs => {
-        //   const trials = configs.map(cfg => ({
-        //     type: jsPsychPluginMathGames,
-        //     cover_story: cfg.cover_story,
-        //     controls: cfg.controls,
-        //     hint_type: cfg.hint_type,
-        //     feedback_type: cfg.feedback_type
-        //   }));
-        // });
-
-
+        // Specify parameters for one math game trial
         const stim = {
             "cover_story": "MoonMissionGame",
             "controls": "arrowKeys",
             "hint_type": "none",
             "feedback_type": "explosion"
         }
+
         const trial =
         {
             type: MathGamesPlugin,
@@ -67,8 +46,8 @@
             hint_type: stim.hint_type,
             feedback_type: stim.feedback_type
         }
-        jsPsych.run([hello_trial, trial]);
 
+        jsPsych.run([hello_trial, trial]);
 
     </script>
 

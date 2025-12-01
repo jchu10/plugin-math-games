@@ -6,12 +6,11 @@
 // 5. Listen for events from the Phaser game to update its own state.
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Response, GameState, GameConfig, LogEvent } from './core/types';
+import { Response, ReactGameState, GameConfig, LogEvent } from './core/types';
 import { launchGame } from './core/game';
 import * as Phaser from 'phaser';
 
 const PHASER_CONTAINER_ID = 'phaser-game-container';
-const CONFIG_FILE_PATH = '/config/game1.json'; // read in from jspsych
 
 interface MathGamesAppProps {
   gameConfig: GameConfig;
@@ -20,14 +19,14 @@ interface MathGamesAppProps {
 
 export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish }) => {
     const [score, setScore] = useState(0);
-    const [gameState, setGameState] = useState(GameState.MainMenu);
+    const [gameState, setGameState] = useState(ReactGameState.MainMenu);
     
     // A ref to hold the Phaser game instance
     const gameRef = useRef<Phaser.Game | null>(null);
     // Ref to collect history events emitted from Phaser
     const eventsRef = useRef<LogEvent[]>([]);
 
-    // This effect runs once on component mount to launch the game
+    // This effect runs once on component mount to launch the game    
     useEffect(() => {
         // Only launch if the game isn't already running
         if (gameRef.current) {
@@ -84,7 +83,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
             };
             eventsRef.current.push(finalEv);
 
-            setGameState(GameState.GameOver);
+            setGameState(ReactGameState.GameOver);
 
             // Prepare enriched payload for jsPsych
             const finishPayload = {
@@ -163,7 +162,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
                 <div id={PHASER_CONTAINER_ID} />
             </div>
 
-            {gameState === GameState.GameOver && (
+            {gameState === ReactGameState.GameOver && (
                 <div className="game-over-screen">
                     <h2>Game Over!</h2>
                     <p>Your final score is: {score}</p>
@@ -172,7 +171,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
                         gameRef.current?.events.emit('restartGame');
                         eventsRef.current = []; // clear collected events for fresh run
                         setScore(0);
-                        setGameState(GameState.Playing);
+                        setGameState(ReactGameState.Playing);
                     }}>
                         Play Again
                     </button>

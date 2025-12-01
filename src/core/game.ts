@@ -12,6 +12,13 @@ export const launchGame = (containerId: string, config: GameConfig): Phaser.Game
         height: 800,
         parent: containerId, // The ID of the div React renders
         backgroundColor: '#333333',
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { x: 0, y: 0 },
+                debug: false
+            }
+        },
         scene: [GameScene], // Tell Phaser to use our scene
     };
 

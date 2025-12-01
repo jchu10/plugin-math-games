@@ -1,4 +1,4 @@
-// import "./index.css"
+import "./index.css"
 import { JsPsych, JsPsychPlugin, ParameterType, TrialType } from "jspsych";
 
 import { version } from "../package.json";
@@ -6,11 +6,11 @@ import { startMathGameTrial, StartMathGameTrialParams } from "./MathGamesPluginW
 
 const info = <const>{
   name: "plugin-math-games",
-  version: version,
+  version: "0.0.1",
   parameters: {
     preamble: {
       type: ParameterType.HTML_STRING,
-      default: "<p>Welcome to the Math Games!</p><p>In this game, you will answer as many math questions as you can within the time limit. Try to get as many correct as possible!</p>",
+      default: "Answer as many questions as you can within the time limit. Try to get as many correct as possible!",
     },
     /** Cover story of the game */
     cover_story: {
