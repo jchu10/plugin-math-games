@@ -2,71 +2,54 @@
 <html>
 
 <head>
-  <title>jsPsych-math-games Example</title>
-  <script src="https://unpkg.com/jspsych@8.2.2"></script>
-  <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
-  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
+    <title>jsPsych-math-games Example</title>
+    <script src="https://unpkg.com/jspsych@8.2.2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
 
-  <!-- <script src="../dist/index.browser.js"></script> -->
-  <script src="https://unpkg.com/plugin-math-games"></script>
+    <!-- plugins -->
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
+    <!-- <script type="module" src="../dist/index.js"></script> -->
+    <!-- <script src="https://unpkg.com/plugin-math-games"></script> -->
+
 </head>
 
 <body>
 
-  <div id="jspsych-target"></div>
 
-  <script>
-    // initialize jsPsych
-    const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
+    <div id="jspsych-target"></div>
 
-    const hello_trial = {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: 'Hello world! Press any key to begin the math game trials.',
-      choices: ['Begin']
-    }
+    <script type="module">
+        import MathGamesPlugin from '../src/index.ts';
 
-    // jsPsych.run(hello_trial);
+        // initialize jsPsych
+        const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
 
-    // // list your trial JSON files here
-    // const trialFiles = [
-    //   'trials/trial1.json',
-    //   'trials/trial2.json',
-    //   'trials/trial3.json',
-    // ];
+        const hello_trial = {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: 'Press begin to start the math game trials.',
+            choices: ['Begin']
+        }
 
-    // // load every JSON, then map to plugin-defined trials
-    // Promise.all(trialFiles.map(path =>
-    //   fetch(path).then(res => res.json())
-    // )).then(configs => {
-    //   const trials = configs.map(cfg => ({
-    //     type: jsPsychPluginMathGames,
-    //     cover_story: cfg.cover_story,
-    //     controls: cfg.controls,
-    //     hint_type: cfg.hint_type,
-    //     feedback_type: cfg.feedback_type
-    //   }));
-    // });
+        // Specify parameters for one math game trial
+        const stim = {
+            "cover_story": "MoonMissionGame",
+            "controls": "arrowKeys",
+            "hint_type": "none",
+            "feedback_type": "explosion"
+        }
 
-    // jsPsych.run([hello_trial, ...trials]);
+        const trial =
+        {
+            type: MathGamesPlugin,
+            cover_story: stim.cover_story,
+            controls: stim.controls,
+            hint_type: stim.hint_type,
+            feedback_type: stim.feedback_type
+        }
 
-    stim = {
-      "cover_story": "MoonMissionGame",
-      "controls": "arrowKeys",
-      "hint_type": "none",
-      "feedback_type": "explosion"
-    }
-    const trial =
-    {
-      type: jsPsychPluginMathGames,
-      cover_story: stim.cover_story,
-      controls: stim.controls,
-      hint_type: stim.hint_type,
-      feedback_type: stim.feedback_type
-    }
-    jsPsych.run([hello_trial, trial]);
+        jsPsych.run([hello_trial, trial]);
 
-
-  </script>
+    </script>
 
 </body>
 
