@@ -1,5 +1,5 @@
 // src/game/utils/GameLogger.ts
-import { MathQuestion, Response, TrialConfig, GameConfig, LogEvent, QuestionDifficulty } from './types';
+import { MathQuestion, Response, GameConfig, LogEvent, QuestionDifficulty } from './types';
 
 export interface GameState {
   gameConfig: GameConfig;
@@ -9,10 +9,9 @@ export interface GameState {
     questionText: string;
     correctAnswer: number;
     allAnswers: number[];
-    questionType?: string;
   };
   progress: {
-    totalQuestions: number;
+    questionsShown: number;
     questionsAnswered: number;
     correctCount: number;
     incorrectCount: number;

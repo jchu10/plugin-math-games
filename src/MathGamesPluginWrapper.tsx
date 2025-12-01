@@ -1,3 +1,4 @@
+import React from 'react'; // explicit import for JSX
 import { createRoot } from "react-dom/client";
 import type { JsPsych } from "jspsych";
 import type { GameConfig } from "./core/types";
@@ -24,7 +25,9 @@ export function startMathGameTrial(
    * Finishes the jsPsych trial, returning the action log.
    */
   const onFinish = (data: { events: any[] }) => {
-    jsPsych.finishTrial(data);
+    console.log("Math game finished with data:", data); // debug log
+    // TODO: should not end trial as one trial may consist of many rounds. Instead, send data to jsPsych response object.
+    // jsPsych.finishTrial(data);
   };
 
   const root = createRoot(display_element);

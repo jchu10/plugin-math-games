@@ -4,15 +4,12 @@ import * as Phaser from 'phaser';
 import { GameScene } from './GameScene';
 import { GameConfig } from '../core/types';
 import { GameOverMoonMission } from './GameOverMoonMission';
-import { GameOverHomeworkHelp } from './GameOverHomeworkHelp';
 
 // This is the function React will call
 export const launchGame = (containerId: string, config: GameConfig): Phaser.Game => {
     const phaserConfig: Phaser.Types.Core.GameConfig = {
         type: Phaser.AUTO,
         parent: containerId, // The ID of the div React renders
-        // width: parent.innerWidth * .8, //1000,
-        // height: parent.innerHeight * .8, //800,
         scale: {
             mode: Phaser.Scale.RESIZE,
             autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -26,7 +23,7 @@ export const launchGame = (containerId: string, config: GameConfig): Phaser.Game
                 debug: false
             }
         },
-        scene: [GameScene, GameOverMoonMission, GameOverHomeworkHelp], // Tell Phaser which scenes to use
+        scene: [GameScene, GameOverMoonMission], // Tell Phaser which scenes to use
     };
 
     const game = new Phaser.Game(phaserConfig);

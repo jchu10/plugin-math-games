@@ -1,6 +1,6 @@
 // React component that wraps the math games.
 // 1. Manage React-level state (like score and gameState).
-// 2. Render the UI around the game (like the score display or a "Game Over" message).
+// 2. <optional> Render the UI around the game (like the score display or a "Game Over" message).
 // 3. Render a <div> that Phaser will use as its container.
 // 4. Use a useEffect hook to initialize and launch the Phaser game once.
 // 5. Listen for events from the Phaser game to update its own state.
@@ -129,44 +129,22 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
     }, [gameConfig, onFinish]);
 
     return (
-        <div style={{
-            display: "flex",
+        <div id="phaser-wrapper" style={{
             justifyContent: "center",
             alignItems: "center",
             height: "100%",
             width: "100%",
         }}>
-            <div style={{
-                display: "inline-block",
-                textAlign: "center",
-                background: "rgba(255,255,255,0.6)",
-                backdropFilter: "blur(10px)",
-                padding: "2rem",
-                borderRadius: "12px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-            }}>
-                <h1
-                    className="ws-header"
-                    style={{
-                        display: 'inline-block',
-                        marginBottom: '1.2rem',
-                        maxWidth: '90%',
-                        fontSize: 20,
-                        wordBreak: 'break-word',
-                    }}
-                >
-                    Shoot the correct asteroids to collect stars~
-                </h1>
-                <h2>Score: {score}</h2>
-                {/* This is the div Phaser will attach to */}
-                <div id={PHASER_CONTAINER_ID} />
-            </div>
-
+            
+            <div id={PHASER_CONTAINER_ID} />
+            
             {gameState === ReactGameState.GameOver && (
                 <div className="game-over-screen">
                     <h2>Game Over!</h2>
                     <p>Your final score is: {score}</p>
+                    
                     <button onClick={() => {
+                        // TODO: Where is this button? Currently Game Over displays, but when clicked, website refreshes.
                         // Tell Phaser to restart
                         gameRef.current?.events.emit('restartGame');
                         eventsRef.current = []; // clear collected events for fresh run

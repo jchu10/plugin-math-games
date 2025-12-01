@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { MathQuestionService } from './mathquestions';
-import { MathQuestion, Response, TrialConfig, GameConfig, LogEvent, QuestionDifficulty } from './types';
+import { MathQuestion, Response, GameConfig, LogEvent, QuestionDifficulty } from './types';
 import { getLogger, GameState, resetLogger } from './GameLogger';
 
 import { drawRoundedRect, drawStar } from './uiUtils';
@@ -10,7 +10,7 @@ export class GameScene extends Phaser.Scene {
     private questionService!: MathQuestionService;
     private currentQuestion!: MathQuestion;
     private lastAnswerCorrect: boolean = false;
-    private startTimestamp: number = 0;
+    private appStartTS: number = 0;
 
     // Phaser objects ----
     private logger = getLogger('MoonMission');
@@ -19,16 +19,15 @@ export class GameScene extends Phaser.Scene {
     private questionsWithHints: string[] = [];
     private currentStreak: number = 0;
     private longestStreak: number = 0;
-    private totalQuestions: number = 0;
+    private questionsShown: number = 0;
     private incorrectCount: number = 0;
 
-    private questionBorder!: Phaser.GameObjects.Graphics;
+    // private questionBorder!: Phaser.GameObjects.Graphics;
     private gameOver: boolean = false;
     private transitioning: boolean = false;
     private lastTimerUpdate?: number;
     private asteroids!: Phaser.Physics.Arcade.Group;
 
-    private score: number = 0;
     private lives: number = 3;
     private timer: number = 120;
 
@@ -111,7 +110,7 @@ export class GameScene extends Phaser.Scene {
     private restartGame() {
         console.log('Restarting game...');
         // Clear history and reset timestamp
-        this.startTimestamp = Date.now();
+        this.appStartTS = Date.now();
         this.scene.restart(this.gameConfig);
     }
 
@@ -245,6 +244,14 @@ export class GameScene extends Phaser.Scene {
             this.load.image('asteroid1', 'asteroid1.png');
             this.load.image('asteroid2', 'asteroid2.png');
             this.load.image('asteroid3', 'asteroid3.png');
+            if (this.gameConfig.feedback_type === 'explosion') {
+                this.load.audio('explosion', 'explosion.mp3');
+                this.load.audio('explosion1', 'explosion.wav');
+            }
+
+            if (this.gameConfig.controls === 'arrowKeys') {
+                this.load.audio('lasershot', 'lasershot.wav');
+            }
         } else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
             this.load.image('classroom', 'classroom.png');
             this.load.image('thoughtbubble', 'thoughtbubble.png');
@@ -254,12 +261,6 @@ export class GameScene extends Phaser.Scene {
             this.load.audio('bubblepop', 'bubblepop.flac');
             this.load.audio('lasershot', 'lasershot.wav');
         }
-
-        if (this.gameConfig.feedback_type === 'explosion') {
-            this.load.audio('explosion', 'explosion.mp3');
-            this.load.audio('explosion1', 'explosion.wav');
-        }
-
         // Show background
         this.add.image(512, 384, 'background');
 
@@ -299,8 +300,7 @@ export class GameScene extends Phaser.Scene {
                     this.updateGameState();
                     this.logger.logEvent('game_over', {
                         reason: 'time_up',
-                        finalScore: this.score,
-                        totalQuestions: this.totalQuestions || 0,
+                        questionsShown: this.questionsShown,
                         questionsAnswered: this.correctCount + this.incorrectCount,
                         correctCount: this.correctCount,
                         incorrectCount: this.incorrectCount,
@@ -370,8 +370,7 @@ export class GameScene extends Phaser.Scene {
                     this.updateGameState();
                     this.logger.logEvent('game_over', {
                         reason: 'lives_lost',
-                        finalScore: this.score,
-                        totalQuestions: this.totalQuestions || 0,
+                        questionsShown: this.questionsShown,
                         questionsAnswered: this.correctCount + this.incorrectCount,
                         correctCount: this.correctCount,
                         incorrectCount: this.incorrectCount,
@@ -384,7 +383,7 @@ export class GameScene extends Phaser.Scene {
                     this.logger.cleanup();
 
                     this.time.delayedCall(1000, () => {
-                        this.scene.start('GameOverMoonMission', { score: this.score });
+                        this.scene.start('GameOverMoonMission', { score: this.correctCount });
                     });
                 } else {
                     this.showNextQuestion();
@@ -560,7 +559,6 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (isCorrect) {
-            this.score += 100;
             this.correctCount = Math.min(15, this.correctCount + 1);
             this.currentStreak++;
             if (this.currentStreak > this.longestStreak) {
@@ -569,7 +567,6 @@ export class GameScene extends Phaser.Scene {
             this.updateProgressBar();
             this.showStarAnimation(asteroid.x, asteroid.y);
         } else {
-            this.score = Math.max(0, this.score - 50);
             this.incorrectCount++;
             this.currentStreak = 0;
             this.loseLife();
@@ -577,16 +574,15 @@ export class GameScene extends Phaser.Scene {
 
         // Log answer submission
         this.updateGameState();
-        this.logger.logEvent('answer_submitted', {
+        this.logger.logEvent('end_question', {
             questionId: questionId,
             questionNumber: this.correctCount + this.incorrectCount,
-            selectedAnswer: selected,
+            responseOptions: this.currentQuestion.options,
             correctAnswer: this.currentQuestion.correctAnswer,
-            isCorrect: isCorrect,
-            method: this.gameConfig.controls === 'arrowKeys' ? 'laser' : 'tap',
-            timeToAnswer: timeToAnswer,
+            response: selected,
+            rt: timeToAnswer,
+            responseIsCorrect: isCorrect,
             hintUsed: this.hintUsedThisQuestion || false,
-            attemptNumber: 1
         });
 
         // Log life lost if incorrect
@@ -637,8 +633,7 @@ export class GameScene extends Phaser.Scene {
                     this.updateGameState();
                     this.logger.logEvent('game_over', {
                         reason: 'lives_lost',
-                        finalScore: this.score,
-                        totalQuestions: this.totalQuestions || 0,
+                        questionsShown: this.questionsShown,
                         questionsAnswered: this.correctCount + this.incorrectCount,
                         correctCount: this.correctCount,
                         incorrectCount: this.incorrectCount,
@@ -651,7 +646,7 @@ export class GameScene extends Phaser.Scene {
                     this.logger.cleanup();
 
                     this.time.delayedCall(1000, () => {
-                        this.scene.start('GameOverMoonMission', { score: this.score });
+                        this.scene.start('GameOverMoonMission', { score: this.correctCount });
                     });
                 } else {
                     this.showNextQuestion();
@@ -699,8 +694,7 @@ export class GameScene extends Phaser.Scene {
             this.updateGameState();
             this.logger.logEvent('game_over', {
                 reason: 'time_up',
-                finalScore: this.score,
-                totalQuestions: this.totalQuestions || 0,
+                questionsShown: this.questionsShown,
                 questionsAnswered: this.correctCount + this.incorrectCount,
                 correctCount: this.correctCount,
                 incorrectCount: this.incorrectCount,
@@ -712,7 +706,7 @@ export class GameScene extends Phaser.Scene {
             this.logger.flushEvents();
             this.logger.cleanup();
 
-            this.scene.start('GameOverMoonMission', { score: this.score });
+            this.scene.start('GameOverMoonMission', { score: this.correctCount });
         });
     }
 
@@ -833,8 +827,7 @@ export class GameScene extends Phaser.Scene {
                 this.updateGameState();
                 this.logger.logEvent('game_over', {
                     reason: 'lives_lost',
-                    finalScore: this.score,
-                    totalQuestions: this.totalQuestions || 0,
+                    questionsShown: this.questionsShown,
                     questionsAnswered: this.correctCount + this.incorrectCount,
                     correctCount: this.correctCount,
                     incorrectCount: this.incorrectCount,
@@ -847,7 +840,7 @@ export class GameScene extends Phaser.Scene {
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
-                    this.scene.start('GameOverMoonMission', { score: this.score });
+                    this.scene.start('GameOverMoonMission', { score: this.correctCount });
                 });
             } else {
                 this.showNextQuestion();
@@ -880,7 +873,6 @@ export class GameScene extends Phaser.Scene {
     create() {
         this.questionService = new MathQuestionService();
         // Reset state
-        this.score = 0;
         this.correctCount = 0;
         this.lives = 3;
         this.timer = 120;
@@ -899,7 +891,7 @@ export class GameScene extends Phaser.Scene {
         this.questionsWithHints = [];
         this.currentStreak = 0;
         this.longestStreak = 0;
-        this.totalQuestions = 0;
+        this.questionsShown = 0;
         this.incorrectCount = 0;
 
         // Initialize game start time
@@ -973,32 +965,31 @@ export class GameScene extends Phaser.Scene {
             this.updateGameState();
             this.logger.logEvent('end_game_pressed', {
                 timeElapsed: timeElapsed,
-                questionsAnswered: this.correctCount + (this.totalQuestions - this.correctCount),
-                currentScore: this.score
+                questionsAnswered: this.correctCount + (this.questionsShown - this.correctCount),
+                currentScore: this.correctCount
             });
 
             // Log game over
-            const totalTime = Date.now() - this.gameStartTime;
-            const avgTimePerQuestion = this.correctCount + (this.totalQuestions - this.correctCount) > 0
-                ? totalTime / (this.correctCount + (this.totalQuestions - this.correctCount))
+            const avgTimePerQuestion = this.correctCount + (this.questionsShown - this.correctCount) > 0
+                ? timeElapsed / (this.correctCount + (this.questionsShown - this.correctCount))
                 : 0;
 
             this.logger.logEvent('game_over', {
                 reason: 'user_quit',
-                finalScore: this.score,
-                totalQuestions: this.totalQuestions || 0,
-                questionsAnswered: this.correctCount + (this.totalQuestions - this.correctCount),
+                finalScore: this.correctCount,
+                questionsShown: this.questionsShown,
+                questionsAnswered: this.correctCount + (this.questionsShown - this.correctCount),
                 correctCount: this.correctCount,
-                incorrectCount: this.totalQuestions - this.correctCount,
+                incorrectCount: this.questionsShown - this.correctCount,
                 totalHintsUsed: this.hintUses,
-                totalTime: totalTime,
+                totalTime: timeElapsed,
                 averageTimePerQuestion: avgTimePerQuestion
             });
             this.logger.stopPeriodicUpdates();
             this.logger.flushEvents();
             this.logger.cleanup();
 
-            this.scene.start('GameOverMoonMission', { score: this.score });
+            this.scene.start('GameOverMoonMission', { score: this.correctCount });
         });
 
         // Timer (top right of game area)
@@ -1118,12 +1109,7 @@ export class GameScene extends Phaser.Scene {
         // Update game state and log game started
         this.updateGameState();
         this.logger.logEvent('game_started', {
-            gameMode: 'practice',
-            initialConfig: {
-                controls: this.gameConfig.controls,
-                hint_type: this.gameConfig.hint_type,
-                feedback_type: this.gameConfig.feedback_type
-            }
+            // nothing to log
         });
 
         // Listen for resize events
@@ -1148,7 +1134,7 @@ export class GameScene extends Phaser.Scene {
                 allAnswers: this.currentQuestion?.options || []
             },
             progress: {
-                totalQuestions: this.totalQuestions || 0,
+                questionsShown: this.questionsShown,
                 questionsAnswered: this.correctCount + this.incorrectCount,
                 correctCount: this.correctCount,
                 incorrectCount: this.incorrectCount,
@@ -1157,7 +1143,7 @@ export class GameScene extends Phaser.Scene {
             },
             status: {
                 lives: this.lives,
-                score: this.score,
+                score: this.correctCount,
                 timeRemaining: this.timer * 1000,
                 gameOver: this.gameOver || false,
                 paused: this.sandboxActive || this.timerPaused || false
@@ -1189,6 +1175,10 @@ export class GameScene extends Phaser.Scene {
         this.logger.updateGameState(gameState);
     }
     private showNextQuestion() {
+        // Initialize question start time
+        this.questionStartTime = Date.now();
+        this.questionsShown += 1;
+
         // Get next question based on last answer correctness
         this.currentQuestion = this.questionService.getNextQuestion(this.lastAnswerCorrect);
 
@@ -1302,7 +1292,7 @@ export class GameScene extends Phaser.Scene {
 
         this.currentQuestion.options.forEach((answer, i) => {
             const x = finalPositions[i];
-            const asteroidKey = i % 3 === 0 ? 'asteroid1' : (i % 3 === 1 ? 'astroid2' : 'asteroid3');
+            const asteroidKey = i % 3 === 0 ? 'asteroid1' : (i % 3 === 1 ? 'asteroid2' : 'asteroid3');
 
             // Calculate responsive scale based on game area size
             const scaleFactor = this.scale.height / 1080;
@@ -1353,7 +1343,7 @@ export class GameScene extends Phaser.Scene {
                     // Log asteroid tapped
                     this.updateGameState();
                     this.logger.logEvent('asteroid_tapped', {
-                        answer: answer,
+                        response: answer,
                         position: {
                             x: x,
                             y: this.gameAreaY + 85
@@ -1780,8 +1770,7 @@ export class GameScene extends Phaser.Scene {
                 this.updateGameState();
                 this.logger.logEvent('game_over', {
                     reason: 'lives_lost',
-                    finalScore: this.score,
-                    totalQuestions: this.totalQuestions || 0,
+                    questionsShown: this.questionsShown,
                     questionsAnswered: this.correctCount + this.incorrectCount,
                     correctCount: this.correctCount,
                     incorrectCount: this.incorrectCount,
@@ -1794,7 +1783,7 @@ export class GameScene extends Phaser.Scene {
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
-                    this.scene.start('GameOverMoonMission', { score: this.score });
+                    this.scene.start('GameOverMoonMission', { score: this.correctCount });
                 });
             } else {
                 this.showNextQuestion();

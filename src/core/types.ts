@@ -58,12 +58,3 @@ export interface GameConfig {
   difficulty: QuestionDifficulty; // initial math difficulty
   question_sequence_logic: questionSequence; // how to adjust difficulty
 }
-
-/**
- * Full trial configuration.
- * - `difficulty`: initial difficulty level for this trial
- */
-export interface TrialConfig {
-  /** Initial array of game configurations for this trial */
-  game_setting: GameConfig[];
-}            
