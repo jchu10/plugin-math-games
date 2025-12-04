@@ -5,49 +5,61 @@
     <title>jsPsych-math-games Example</title>
     <script src="https://unpkg.com/jspsych@8.2.2"></script>
     <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
-
-    <!-- plugins -->
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
-    <!-- <script type="module" src="../dist/index.js"></script> -->
-    <!-- <script src="https://unpkg.com/plugin-math-games"></script> -->
 
 </head>
 
 <body>
-
 
     <div id="jspsych-target"></div>
 
     <script type="module">
         import MathGamesPlugin from '../src/index.ts';
 
-        // initialize jsPsych
         const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
 
-        const hello_trial = {
+        const hello = {
             type: jsPsychHtmlButtonResponse,
             stimulus: 'Press begin to start the math game trials.',
             choices: ['Begin']
         }
 
+        // const trial =
+        // {
+        //     type: MathGamesPlugin,
+        //     cover_story: stim.cover_story,
+        //     controls: stim.controls,
+        //     hint_type: stim.hint_type,
+        //     feedback_type: stim.feedback_type,
+        //     preamble: "<h3>Math Game Trial</h3>",
+        //     game_size: [600, 1000]
+        // }
+
+
         // Specify parameters for one math game trial
-        const stim = {
-            "cover_story": "MoonMissionGame",
-            "controls": "arrowKeys",
+        const stim1 = {
+            "cover_story": "MoonMissionGame",//"HomeworkHelperGame",
+            "controls": "tapToSelect",
             "hint_type": "none",
             "feedback_type": "explosion"
         }
 
-        const trial =
-        {
-            type: MathGamesPlugin,
-            cover_story: stim.cover_story,
-            controls: stim.controls,
-            hint_type: stim.hint_type,
-            feedback_type: stim.feedback_type
+        const stim2 = {
+            "cover_story": "MoonMissionGame",//"HomeworkHelperGame",
+            "controls": "arrowKeys",
+            "hint_type": "none",
+            "feedback_type": "explanation"
         }
 
-        jsPsych.run([hello_trial, trial]);
+        const math_trials = {
+            type: MathGamesPlugin,
+            timeline: [stim1, stim2],
+            preamble: "<h3>Math Game Trials</h3>",
+            game_size: [600, 1000]
+        }
+
+
+        jsPsych.run([hello, math_trials]);
 
     </script>
 

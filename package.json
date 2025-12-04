@@ -1,6 +1,6 @@
 {
   "name": "plugin-math-games",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "This plugin displays math games. The games can be displayed until a button response is given, or for a fixed length of time.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -64,6 +64,7 @@
     "@vitejs/plugin-react": "^4.6.0",
     "identity-obj-proxy": "^3.0.0",
     "phaser3spectorjs": "^0.0.8",
+    "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-postcss": "^4.0.2",
     "ts-jest": "^29.4.5",
     "typescript": "~5.7.2",

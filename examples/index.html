@@ -8,8 +8,8 @@
 
     <!-- plugins -->
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
-    <!-- <script type="module" src="../dist/index.js"></script> -->
-    <!-- <script src="https://unpkg.com/plugin-math-games"></script> -->
+    <script src="../dist/index.browser.js"></script>
+    <!-- <script type="module" src="https://unpkg.com/plugin-math-games"></script> -->
 
 </head>
 
@@ -18,15 +18,18 @@
 
     <div id="jspsych-target"></div>
 
-    <script type="module">
-        import MathGamesPlugin from '../src/index.ts';
-
+    <script>
         // initialize jsPsych
-        const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
+        const jsPsych = initJsPsych({
+            display_element: 'jspsych-target',
+            on_finish: function () {
+                jsPsych.data.displayData();
+            }
+        });
 
-        const hello_trial = {
+        const hello = {
             type: jsPsychHtmlButtonResponse,
-            stimulus: 'Press begin to start the math game trials.',
+            stimulus: 'Press begin to start the next trial.',
             choices: ['Begin']
         }
 
@@ -38,16 +41,28 @@
             "feedback_type": "explosion"
         }
 
-        const trial =
+        const trial1 =
         {
-            type: MathGamesPlugin,
+            type: jsPsychMathGames,
             cover_story: stim.cover_story,
             controls: stim.controls,
             hint_type: stim.hint_type,
-            feedback_type: stim.feedback_type
+            feedback_type: stim.feedback_type,
+            preamble: "<h3>Math Game Trial 1</h3>",
+            game_size: [600, 1000]
         }
 
-        jsPsych.run([hello_trial, trial]);
+        const trial2 = {
+            type: jsPsychMathGames,
+            cover_story: stim.cover_story,
+            controls: "tapToSelect",
+            hint_type: "powerup",
+            feedback_type: "explanation",
+            preamble: "<h3>Math Game Trial 2</h3>",
+            game_size: [600, 1000]
+        }
+
+        jsPsych.run([hello, trial1, hello, trial2]);
 
     </script>
 
