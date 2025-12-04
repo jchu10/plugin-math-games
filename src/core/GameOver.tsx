@@ -27,12 +27,12 @@ export class GameOver extends Scene {
         if (this.gameover_text) {
             const scaleFactor = this.scale.height / 1080;
             const fontSize = Math.floor(64 * scaleFactor);
-            this.gameover_text.setPosition(this.scale.width / 2, this.scale.height / 2);
+            this.gameover_text.setPosition(this.scale.width / 2, this.scale.height / 3);
             this.gameover_text.setStyle({ fontSize: `${fontSize}px` });
         }
     }
 
-    create(data: { backgroundKey?: string } = {}) {
+    create(data: { backgroundKey?: string; gameConfig?: any } = {}) {
         this.cameras.main.setBackgroundColor('#ffffff');
         const backgroundKey = data.backgroundKey || 'classroom';
         const gameAreaHeight = Math.floor(this.scale.height * 0.9);
@@ -57,7 +57,7 @@ export class GameOver extends Scene {
 
         this.gameover_text = this.add.text(
             this.scale.width / 2,
-            this.scale.height / 2,
+            this.scale.height / 3,
             'Game Over',
             {
                 fontFamily: 'Arial',
@@ -69,8 +69,30 @@ export class GameOver extends Scene {
         );
         this.gameover_text.setOrigin(0.5);
 
-        this.input.once('pointerdown', () => {
-            window.location.reload();
+        // Add "Try Again" button below the Game Over text
+        const button = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 3 * 2,
+            'Try Again',
+            {
+                fontFamily: 'Arial',
+                fontSize: 64,
+                color: '#ffffff',
+                backgroundColor: '#2d3a4a',
+                padding: { left: 32, right: 32, top: 16, bottom: 16 },
+                align: 'center',
+                fontStyle: 'bold',
+                // borderRadius: 12 // Not supported by Phaser TextStyle
+            }
+        ).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        button.on('pointerdown', () => {
+            // Restart the game scene with the original config if available
+            if (data && data.gameConfig) {
+                this.scene.start('GameScene', data.gameConfig);
+            } else {
+                this.scene.start('GameScene');
+            }
         });
     }
 }
