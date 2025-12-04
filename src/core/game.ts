@@ -3,7 +3,7 @@
 import * as Phaser from 'phaser';
 import { GameScene } from './GameScene';
 import { GameConfig } from '../core/types';
-import { GameOverMoonMission } from './GameOverMoonMission';
+import { GameOver } from './GameOver';
 
 // This is the function React will call
 export const launchGame = (containerId: string, config: GameConfig): Phaser.Game => {
@@ -23,7 +23,7 @@ export const launchGame = (containerId: string, config: GameConfig): Phaser.Game
                 debug: false
             }
         },
-        scene: [GameScene, GameOverMoonMission], // Tell Phaser which scenes to use
+        scene: [GameScene, GameOver], // Tell Phaser which scenes to use
     };
 
     const game = new Phaser.Game(phaserConfig);

@@ -321,7 +321,7 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        // Move asteroid labels with asteroids
+        // Update answer object positions
         if (this.answerObjects) {
             this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
                 const sprite = asteroid as Phaser.Physics.Arcade.Image;
@@ -384,7 +384,10 @@ export class GameScene extends Phaser.Scene {
                     this.logger.cleanup();
 
                     this.time.delayedCall(1000, () => {
-                        this.scene.start('GameOverMoonMission', { score: this.correctCount });
+                        this.scene.start('GameOver', {
+                            score: this.correctCount,
+                            backgroundKey: 'game_bg_img',
+                        });
                     });
                 } else {
                     this.showNextQuestion();
@@ -645,7 +648,11 @@ export class GameScene extends Phaser.Scene {
                     this.logger.cleanup();
 
                     this.time.delayedCall(1000, () => {
-                        this.scene.start('GameOverMoonMission', { score: this.correctCount });
+                        this.scene.start('GameOver', {
+                            score: this.correctCount,
+                            backgroundKey: 'game_bg_img',
+                        });
+
                     });
                 } else {
                     this.showNextQuestion();
@@ -703,7 +710,11 @@ export class GameScene extends Phaser.Scene {
             });
             this.logger.cleanup();
 
-            this.scene.start('GameOverMoonMission', { score: this.correctCount });
+            this.scene.start('GameOver', {
+                score: this.correctCount,
+                backgroundKey: 'game_bg_img',
+            });
+
         });
     }
 
@@ -835,7 +846,10 @@ export class GameScene extends Phaser.Scene {
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
-                    this.scene.start('GameOverMoonMission', { score: this.correctCount });
+                    this.scene.start('GameOver', {
+                        score: this.correctCount,
+                        backgroundKey: 'game_bg_img',
+                    });
                 });
             } else {
                 this.showNextQuestion();
@@ -982,7 +996,11 @@ export class GameScene extends Phaser.Scene {
             });
             this.logger.cleanup();
 
-            this.scene.start('GameOverMoonMission', { score: this.correctCount });
+            this.scene.start('GameOver', {
+                score: this.correctCount,
+                backgroundKey: 'game_bg_img',
+            });
+
         });
 
         // Timer (top right of game area)
@@ -1776,11 +1794,17 @@ export class GameScene extends Phaser.Scene {
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
-                    this.scene.start('GameOverMoonMission', { score: this.correctCount });
+                    this.scene.start('GameOver', {
+                        score: this.correctCount,
+                        backgroundKey: 'game_bg_img',
+                    });
                 });
             } else {
                 this.showNextQuestion();
             }
         }
     }
+
 }
+
+
