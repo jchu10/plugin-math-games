@@ -387,6 +387,7 @@ export class GameScene extends Phaser.Scene {
                         this.scene.start('GameOver', {
                             score: this.correctCount,
                             backgroundKey: 'game_bg_img',
+                            gameConfig: this.gameConfig,
                         });
                     });
                 } else {
@@ -880,6 +881,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     create() {
+        // Ensure progress bar is reset on restart
+        if (this.progressContainer) {
+            this.progressContainer.destroy();
+            this.progressContainer = undefined;
+        }
         this.questionService = new MathQuestionService();
         // Reset state
         this.correctCount = 0;
@@ -1230,9 +1236,9 @@ export class GameScene extends Phaser.Scene {
         if (this.gameConfig.cover_story === 'MoonMissionGame') {
             this.spawnAnswerObjects(
                 'asteroid',
-                (i, x) => Phaser.Math.Between(this.gameAreaY + 85, this.clippingBorderY - 100),
+                (i, x) => this.gameAreaY + 85,
                 [0.18, 0.35],
-                (i) => Phaser.Math.Between(30, 65) * 0.55,
+                (i) => Phaser.Math.Between(30, 65) * 0.5,
                 150,
             );
         } else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
@@ -1240,7 +1246,7 @@ export class GameScene extends Phaser.Scene {
                 'thoughtbubble',
                 (i, x) => this.gameAreaY + this.gameAreaHeight - Math.floor(this.baseBottomBarHeight * (this.scale.height / 1080)),
                 [0.28, 0.45],
-                (i) => -Phaser.Math.Between(30, 65) * 0.45,
+                (i) => -Phaser.Math.Between(30, 65) * 0.5,
                 50,
             );
         }
@@ -1441,26 +1447,63 @@ export class GameScene extends Phaser.Scene {
     }
 
     updateAnswerObjectClipping() {
-        this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
-            const sprite = asteroid as Phaser.Physics.Arcade.Image;
+        this.answerObjects.getChildren().forEach((answerObj: Phaser.GameObjects.GameObject) => {
+            const sprite = answerObj as Phaser.Physics.Arcade.Image;
             const label = sprite.getData('label') as Phaser.GameObjects.Text;
 
-            const asteroidTop = sprite.y - sprite.displayHeight / 2;
-            const asteroidBottom = sprite.y + sprite.displayHeight / 2;
+            // Get top and bottom of object
+            const objTop = sprite.y - sprite.displayHeight / 2;
+            const objBottom = sprite.y + sprite.displayHeight / 2;
 
-            if (asteroidBottom > this.clippingBorderY) {
-                const clippedHeight = asteroidBottom - this.clippingBorderY;
-                const totalHeight = sprite.displayHeight;
-                const visibleRatio = Math.max(0, (totalHeight - clippedHeight) / totalHeight);
-
-                if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
-                    sprite.setAlpha(Math.min(visibleRatio, 0.3));
-                    if (label) label.setAlpha(Math.min(visibleRatio, 0.3));
+            // Moon Mission: asteroids fall, fade at bottom
+            if (this.gameConfig.cover_story === 'MoonMissionGame') {
+                if (objBottom > this.clippingBorderY) {
+                    const clippedHeight = objBottom - this.clippingBorderY;
+                    const totalHeight = sprite.displayHeight;
+                    const visibleRatio = Math.max(0, (totalHeight - clippedHeight) / totalHeight);
+                    if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
+                        sprite.setAlpha(Math.min(visibleRatio, 0.3));
+                        if (label) label.setAlpha(Math.min(visibleRatio, 0.3));
+                    } else {
+                        sprite.setAlpha(visibleRatio);
+                        if (label) label.setAlpha(visibleRatio);
+                    }
                 } else {
-                    sprite.setAlpha(visibleRatio);
-                    if (label) label.setAlpha(visibleRatio);
+                    if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
+                        sprite.setAlpha(0.3);
+                        if (label) label.setAlpha(0.3);
+                    } else {
+                        sprite.setAlpha(1);
+                        if (label) label.setAlpha(1);
+                    }
                 }
-            } else {
+            }
+            // HomeworkHelp: thought bubbles rise, fade at top
+            else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
+                const whiteBarBottom = this.gameAreaY + 60;
+                if (objTop < whiteBarBottom) {
+                    const clippedHeight = whiteBarBottom - objTop;
+                    const totalHeight = sprite.displayHeight;
+                    const visibleRatio = Math.max(0, (totalHeight - clippedHeight) / totalHeight);
+                    if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
+                        sprite.setAlpha(Math.min(visibleRatio, 0.3));
+                        if (label) label.setAlpha(Math.min(visibleRatio, 0.3));
+                    } else {
+                        sprite.setAlpha(visibleRatio);
+                        if (label) label.setAlpha(visibleRatio);
+                    }
+                } else {
+                    if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
+                        sprite.setAlpha(0.3);
+                        if (label) label.setAlpha(0.3);
+                    } else {
+                        sprite.setAlpha(1);
+                        if (label) label.setAlpha(1);
+                    }
+                }
+            }
+            // Default: no clipping/fading
+            else {
                 if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
                     sprite.setAlpha(0.3);
                     if (label) label.setAlpha(0.3);
