@@ -23,10 +23,11 @@ export class GameScene extends Phaser.Scene {
     private incorrectCount: number = 0;
 
     // private questionBorder!: Phaser.GameObjects.Graphics;
+    private answerObjects!: Phaser.Physics.Arcade.Group;
+    private answerObjectLabels: Phaser.GameObjects.Text[] = [];
     private gameOver: boolean = false;
     private transitioning: boolean = false;
     private lastTimerUpdate?: number;
-    private asteroids!: Phaser.Physics.Arcade.Group;
 
     private lives: number = 3;
     private timer: number = 120;
@@ -97,6 +98,8 @@ export class GameScene extends Phaser.Scene {
     private baseFontSize: number = 32;
     private baseBarHeight: number = 110;
     private baseBottomBarHeight: number = 130;
+    private optionLabelColor: string = "#000000";
+    private optionLabelStroke: string = "#ffffff";
 
     constructor() {
         super('GameScene');
@@ -239,13 +242,15 @@ export class GameScene extends Phaser.Scene {
         this.load.image('powertool', 'powertool.png');
 
         if (this.gameConfig.cover_story === 'MoonMissionGame') {
-            this.load.image('starrynight', 'starrynight.png');
+            this.optionLabelColor = "#fff";
+            this.optionLabelStroke = "#000";
+            this.load.image('game_bg_img', 'starrynight.png');
             this.load.image('spaceship', 'spaceship.png');
-            this.load.image('asteroid1', 'asteroid1.png');
-            this.load.image('asteroid2', 'asteroid2.png');
-            this.load.image('asteroid3', 'asteroid3.png');
+            this.load.image('answerObject1', 'asteroid1.png');
+            this.load.image('answerObject2', 'asteroid2.png');
+            this.load.image('answerObject3', 'asteroid3.png');
             if (this.gameConfig.feedback_type === 'explosion') {
-                this.load.audio('explosion', 'explosion.mp3');
+                // this.load.audio('explosion', 'explosion.mp3');
                 this.load.audio('explosion1', 'explosion.wav');
             }
 
@@ -253,12 +258,12 @@ export class GameScene extends Phaser.Scene {
                 this.load.audio('lasershot', 'lasershot.wav');
             }
         } else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
-            this.load.image('classroom', 'classroom.png');
-            this.load.image('thoughtbubble', 'thoughtbubble.png');
-            this.load.image('thoughtbubble2', 'thoughtbubble2.png');
-            this.load.image('thoughtbubble3', 'thoughtbubble3.png');
-            this.load.image('pencil', 'pencil.png');
-            this.load.audio('bubblepop', 'bubblepop.flac');
+            this.load.image('game_bg_img', 'classroom.png');
+            this.load.image('answerObject1', 'thoughtbubble.png');
+            this.load.image('answerObject2', 'thoughtbubble2.png');
+            this.load.image('answerObject3', 'thoughtbubble3.png');
+            this.load.image('spaceship', 'pencil.png');
+            this.load.audio('explosion1', 'bubblepop.flac');
             this.load.audio('lasershot', 'lasershot.wav');
         }
         // Show background
@@ -308,8 +313,6 @@ export class GameScene extends Phaser.Scene {
                         totalTime: totalTime,
                         averageTimePerQuestion: avgTimePerQuestion
                     });
-                    this.logger.stopPeriodicUpdates();
-                    this.logger.flushEvents();
                     this.logger.cleanup();
 
                     // Show time's up message and delay before game over
@@ -319,8 +322,8 @@ export class GameScene extends Phaser.Scene {
         }
 
         // Move asteroid labels with asteroids
-        if (this.asteroids) {
-            this.asteroids.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
+        if (this.answerObjects) {
+            this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
                 const sprite = asteroid as Phaser.Physics.Arcade.Image;
                 const label = sprite.getData('label') as Phaser.GameObjects.Text;
 
@@ -331,16 +334,16 @@ export class GameScene extends Phaser.Scene {
                 }
             });
 
-            this.updateAsteroidClipping();
+            this.updateAnswerObjectClipping();
 
-            const allGone = this.asteroids.getChildren().length > 0 && this.asteroids.getChildren().every((asteroid: Phaser.GameObjects.GameObject) => {
+            const allGone = this.answerObjects.getChildren().length > 0 && this.answerObjects.getChildren().every((asteroid: Phaser.GameObjects.GameObject) => {
                 const sprite = asteroid as Phaser.Physics.Arcade.Image;
                 return sprite.y > this.gameAreaY + this.gameAreaHeight + 50;
             });
 
             if (allGone && !this.transitioning) {
                 if (this.hintActive) {
-                    this.asteroids.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
+                    this.answerObjects.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
                         const s = a as Phaser.Physics.Arcade.Image;
                         const lbl = s.getData('label') as Phaser.GameObjects.Text;
                         s.setAlpha(1);
@@ -349,7 +352,7 @@ export class GameScene extends Phaser.Scene {
                     this.hintActive = false;
                 }
                 if (this.powertoolActive) {
-                    this.asteroids.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
+                    this.answerObjects.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
                         const s = a as Phaser.Physics.Arcade.Image;
                         const lbl = s.getData('label') as Phaser.GameObjects.Text;
                         s.setAlpha(1);
@@ -358,7 +361,7 @@ export class GameScene extends Phaser.Scene {
                     this.powertoolActive = false;
                 }
                 this.loseLife();
-                this.clearAsteroidsAndLabels();
+                this.clearAnswerObjects();
                 // Check if game should end (no lives left)
                 if (this.lives === 0) {
                     // Log game over
@@ -378,8 +381,6 @@ export class GameScene extends Phaser.Scene {
                         totalTime: totalTime,
                         averageTimePerQuestion: avgTimePerQuestion
                     });
-                    this.logger.stopPeriodicUpdates();
-                    this.logger.flushEvents();
                     this.logger.cleanup();
 
                     this.time.delayedCall(1000, () => {
@@ -434,7 +435,7 @@ export class GameScene extends Phaser.Scene {
                 const laserSprite = laser as Phaser.Physics.Arcade.Image;
                 laserSprite.y -= 8;
 
-                this.physics.overlap(laserSprite, this.asteroids, (_laserObj, asteroidObj) => {
+                this.physics.overlap(laserSprite, this.answerObjects, (_laserObj, asteroidObj) => {
                     const asteroid = asteroidObj as Phaser.Physics.Arcade.Image;
                     this.laserHitAsteroid(laserSprite, asteroid);
                 });
@@ -500,10 +501,10 @@ export class GameScene extends Phaser.Scene {
         this.updateProgressBar();
     }
 
-    private clearAsteroidsAndLabels() {
-        this.asteroids.clear(true, true);
-        this.asteroidLabels.forEach(label => { if (label?.active) label.destroy(); });
-        this.asteroidLabels = [];
+    private clearAnswerObjects() {
+        this.answerObjects.clear(true, true);
+        this.answerObjectLabels.forEach(label => { if (label?.active) label.destroy(); });
+        this.answerObjectLabels = [];
     }
 
     private explodeAsteroid(asteroid: Phaser.Physics.Arcade.Image) {
@@ -598,7 +599,7 @@ export class GameScene extends Phaser.Scene {
 
         // Reset hint visuals
         if (this.hintActive) {
-            this.asteroids.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
+            this.answerObjects.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
                 const s = a as Phaser.Physics.Arcade.Image;
                 const lbl = s.getData('label') as Phaser.GameObjects.Text;
                 s.setAlpha(1);
@@ -608,7 +609,7 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (this.powertoolActive) {
-            this.asteroids.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
+            this.answerObjects.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
                 const s = a as Phaser.Physics.Arcade.Image;
                 const lbl = s.getData('label') as Phaser.GameObjects.Text;
                 s.setAlpha(1);
@@ -620,7 +621,7 @@ export class GameScene extends Phaser.Scene {
         // Handle feedback
         if (this.gameConfig.feedback_type === 'explosion') {
             this.explodeAsteroid(asteroid);
-            this.clearAsteroidsAndLabels();
+            this.clearAnswerObjects();
             this.time.delayedCall(isCorrect ? 500 : 0, () => {
                 // Check if game should end (no lives left)
                 if (this.lives === 0) {
@@ -641,8 +642,6 @@ export class GameScene extends Phaser.Scene {
                         totalTime: totalTime,
                         averageTimePerQuestion: avgTimePerQuestion
                     });
-                    this.logger.stopPeriodicUpdates();
-                    this.logger.flushEvents();
                     this.logger.cleanup();
 
                     this.time.delayedCall(1000, () => {
@@ -702,8 +701,6 @@ export class GameScene extends Phaser.Scene {
                 totalTime: totalTime,
                 averageTimePerQuestion: avgTimePerQuestion
             });
-            this.logger.stopPeriodicUpdates();
-            this.logger.flushEvents();
             this.logger.cleanup();
 
             this.scene.start('GameOverMoonMission', { score: this.correctCount });
@@ -711,7 +708,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private showFeedbackPopup(isCorrect: boolean, a: number, b: number, correct: number) {
-        this.clearAsteroidsAndLabels();
+        this.clearAnswerObjects();
         this.feedbackActive = true;
 
         const popupWidth = Math.min(this.gameAreaSize * 0.8, 500);
@@ -835,8 +832,6 @@ export class GameScene extends Phaser.Scene {
                     totalTime: totalTime,
                     averageTimePerQuestion: avgTimePerQuestion
                 });
-                this.logger.stopPeriodicUpdates();
-                this.logger.flushEvents();
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
@@ -907,7 +902,7 @@ export class GameScene extends Phaser.Scene {
         this.whiteBackground.setDepth(0);
 
         // Background image
-        this.backgroundImage = this.add.image(this.gameAreaX + this.gameAreaSize / 2, this.gameAreaY + this.gameAreaHeight / 2, 'starrynight')
+        this.backgroundImage = this.add.image(this.gameAreaX + this.gameAreaSize / 2, this.gameAreaY + this.gameAreaHeight / 2, 'game_bg_img')
             .setOrigin(0.5, 0.5)
             .setDisplaySize(this.gameAreaSize, this.gameAreaHeight)
             .setDepth(1);
@@ -985,8 +980,6 @@ export class GameScene extends Phaser.Scene {
                 totalTime: timeElapsed,
                 averageTimePerQuestion: avgTimePerQuestion
             });
-            this.logger.stopPeriodicUpdates();
-            this.logger.flushEvents();
             this.logger.cleanup();
 
             this.scene.start('GameOverMoonMission', { score: this.correctCount });
@@ -1024,7 +1017,7 @@ export class GameScene extends Phaser.Scene {
                         hintContent: null
                     });
 
-                    this.asteroids.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
+                    this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
                         const sprite = asteroid as Phaser.Physics.Arcade.Image;
                         const label = sprite.getData('label') as Phaser.GameObjects.Text;
                         if (sprite.getData('answer') === this.currentQuestion.correctAnswer) {
@@ -1075,7 +1068,7 @@ export class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(1003);
 
         // Init asteroid group
-        this.asteroids = this.physics.add.group();
+        this.answerObjects = this.physics.add.group();
 
         // Spaceship (positioned in bottom bar, layered above white bar)
         this.spaceship = this.add.image(this.gameAreaX + this.gameAreaSize / 2, bottomBarY + bottomBarHeight - Math.floor(5 * scaleFactor), 'spaceship')
@@ -1216,143 +1209,145 @@ export class GameScene extends Phaser.Scene {
         this.powertoolActive = false;
         this.powerupFromFeedback = false;
 
-        this.spawnAsteroids();
+        if (this.gameConfig.cover_story === 'MoonMissionGame') {
+            this.spawnAnswerObjects(
+                'asteroid',
+                (i, x) => Phaser.Math.Between(this.gameAreaY + 85, this.clippingBorderY - 100),
+                [0.18, 0.35],
+                (i) => Phaser.Math.Between(30, 65) * 0.55,
+                150,
+            );
+        } else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
+            this.spawnAnswerObjects(
+                'thoughtbubble',
+                (i, x) => this.gameAreaY + this.gameAreaHeight - Math.floor(this.baseBottomBarHeight * (this.scale.height / 1080)),
+                [0.28, 0.45],
+                (i) => -Phaser.Math.Between(30, 65) * 0.45,
+                50,
+            );
+        }
     }
 
-    spawnAsteroids() {
-        this.clearAsteroidsAndLabels();
+    spawnAnswerObjects(
+        type: 'asteroid' | 'thoughtbubble',
+        yPosition: (i: number, x: number) => number,
+        scaleRange: [number, number],
+        velocity: (i: number) => number,
+        depth: number,
+    ) {
+        this.clearAnswerObjects()
 
+        // Calculate spawn area
         const scaleFactor = this.scale.height / 1080;
         const progressX = this.gameAreaX + Math.floor(75 * scaleFactor);
         const progressBarWidth = this.progressBarWidth;
-        // Stars extend left by width/2 + 20 pixels from container center
-        // Stars are drawn with radius ~10.4, so add that plus extra padding for asteroid/cloud size
-        const starExtension = (progressBarWidth / 2) + 20 + 20; // 20 for star radius and visual padding
-        const progressBarPadding = 20; // Padding to account for asteroid/cloud size and ensure no overlap
+        const starExtension = (progressBarWidth / 2) + 20 + 20;
+        const progressBarPadding = 20;
 
-        // Calculate safe spawn area (avoid progress bar region)
-        // Progress bar container is at progressX, stars extend left by starExtension
-        // Account for maximum asteroid size (0.35 * scaleFactor * asteroidImageWidth)
-        const maxAsteroidSize = 0.35 * scaleFactor * 200; // Approximate max asteroid width
-        // Calculate the right edge of the exclusion zone - everything to the left of this is forbidden
-        // Use half of maxAsteroidSize to reduce the exclusion zone
-        const progressBarRight = progressX + progressBarWidth + progressBarPadding + (maxAsteroidSize * 0.5);
-
-        // Set minX to be well to the right of the progress bar - this ensures NO spawning on the left
+        // Exclusion zone logic
+        const maxObjectSize = (type === 'asteroid' ? 0.35 : 0.45) * scaleFactor * 200;
+        const progressBarRight = progressX + progressBarWidth + progressBarPadding + (maxObjectSize * 0.5);
         const minX = Math.max(this.gameAreaX + 12, Math.ceil(progressBarRight));
-        const maxX = this.gameAreaX + this.gameAreaSize - 12;
-        const minDist = 60; // Reduced minimum distance to allow more variation
+        const maxX = this.gameAreaX + this.gameAreaSize - 50;
+        const minDist = 60;
         const numAnswers = this.currentQuestion.options.length;
 
-        // Generate exactly the number of positions we need (one per answer)
+        // Generate X positions
         let positions: number[] = [];
         let attempts = 0;
-        const maxAttempts = 5000; // Increased attempts
-
+        const maxAttempts = 5000;
         while (positions.length < numAnswers && attempts < maxAttempts) {
             let x = Phaser.Math.Between(minX, maxX);
             // Check if position maintains minimum distance from other positions
-            const farEnoughFromOthers = positions.every(px => Math.abs(px - x) >= minDist);
-            if (farEnoughFromOthers) {
-                positions.push(x);
-            }
+            const farEnough = positions.every(px => Math.abs(px - x) >= minDist);
+            if (farEnough) positions.push(x);
             attempts++;
         }
-
-        // If we couldn't generate enough positions with strict distance, try with reduced distance
         if (positions.length < numAnswers) {
+            // If we couldn't generate enough positions with strict distance, try with reduced distance
             const reducedMinDist = 40;
             while (positions.length < numAnswers && attempts < maxAttempts) {
                 let x = Phaser.Math.Between(minX, maxX);
-                const farEnoughFromOthers = positions.every(px => Math.abs(px - x) >= reducedMinDist);
-                if (farEnoughFromOthers) {
-                    positions.push(x);
-                }
+                const farEnough = positions.every(px => Math.abs(px - x) >= reducedMinDist);
+                if (farEnough) positions.push(x);
                 attempts++;
             }
         }
-
         // Ensure all positions are unique (no exact duplicates) and sort them
         positions = [...new Set(positions)].sort((a, b) => a - b);
-
         // If we still don't have enough positions, fill with varied spaced positions
         if (positions.length < numAnswers) {
             const availableWidth = maxX - minX;
             const baseSpacing = availableWidth / (numAnswers + 1);
             positions = [];
             for (let i = 1; i <= numAnswers; i++) {
-                // Add some randomness to the spacing for variation
                 const randomOffset = Phaser.Math.Between(-baseSpacing * 0.3, baseSpacing * 0.3);
                 positions.push(Math.floor(minX + baseSpacing * i + randomOffset));
             }
         }
-
-        // Use exactly the number of positions we need
         const finalPositions = positions.slice(0, numAnswers);
 
+        // Create answerObjects group if not exists
+        if (!this.answerObjects) {
+            this.answerObjects = this.physics.add.group();
+        }
+
+        // Spawn answerObjects
         this.currentQuestion.options.forEach((answer, i) => {
             const x = finalPositions[i];
-            const asteroidKey = i % 3 === 0 ? 'asteroid1' : (i % 3 === 1 ? 'asteroid2' : 'asteroid3');
-
-            // Calculate responsive scale based on game area size
-            const scaleFactor = this.scale.height / 1080;
-            const minSize = 0.18 * scaleFactor;
-            const maxSize = 0.35 * scaleFactor;
+            const answerObjectKey = i % 3 === 0 ? 'answerObject1' : (i % 3 === 1 ? 'answerObject2' : 'answerObject3');
+            const minSize = scaleRange[0] * scaleFactor;
+            const maxSize = scaleRange[1] * scaleFactor;
             const minAnswer = Math.min(...this.currentQuestion.options);
             const maxAnswer = Math.max(...this.currentQuestion.options);
-
             let scale: number;
             if (maxAnswer === minAnswer) {
                 scale = (minSize + maxSize) / 2;
             } else {
-                const normalizedAnswer = (answer - minAnswer) / (maxAnswer - minAnswer);
-                scale = minSize + (normalizedAnswer * (maxSize - minSize));
+                const normalized = (answer - minAnswer) / (maxAnswer - minAnswer);
+                scale = minSize + (normalized * (maxSize - minSize));
             }
+            const y = yPosition(i, x);
+            const obj = this.answerObjects.create(x, y, answerObjectKey) as Phaser.Physics.Arcade.Image;
+            const speed = velocity(i);
+            obj.setVelocityY(speed);
+            obj.setScale(scale);
+            obj.setData('answer', answer);
+            obj.setDepth(depth);
 
-            const asteroid = this.asteroids.create(x, this.gameAreaY + 85, asteroidKey) as Phaser.Physics.Arcade.Image;
-            const speed = Phaser.Math.Between(30, 65) * 0.55;
-            asteroid.setVelocityY(speed);
-            asteroid.setScale(scale);
-            asteroid.setData('answer', answer);
-            asteroid.setDepth(150);
-
-            // Log asteroid spawned
+            // Log spawned
             this.updateGameState();
             this.logger.logEvent('asteroid_spawned', {
-                answer: answer,
-                position: {
-                    x: x,
-                    y: this.gameAreaY + 85
-                },
+                answer,
+                position: { x, y },
                 size: scale,
-                speed: speed,
-                asteroidType: asteroidKey,
+                speed,
+                asteroidType: answerObjectKey,
                 spawnIndex: i
             });
 
-            const label = this.add.text(x, this.gameAreaY + 85, answer.toString(), {
-                font: `${Math.floor(32 * scaleFactor)}px Arial`, color: '#fff', fontStyle: 'bold', stroke: '#000', strokeThickness: Math.floor(5 * scaleFactor)
-            }).setOrigin(0.5).setDepth(250);
-            asteroid.setData('label', label);
-            this.asteroidLabels.push(label);
+            // Add label if needed
 
-            // Make clickable for tap-to-select games
+            const lbl = this.add.text(x, y, answer.toString(), {
+                font: `${Math.floor(32 * scaleFactor)}px Arial`, color: this.optionLabelColor, fontStyle: 'bold', stroke: this.optionLabelStroke, strokeThickness: Math.floor(5 * scaleFactor)
+            }).setOrigin(0.5).setDepth(depth + 100);
+            obj.setData('label', lbl);
+            this.answerObjectLabels.push(lbl);
+
+
+            // Make clickable for tap-to-select
             if (this.gameConfig.controls === 'tapToSelect') {
-                asteroid.setInteractive();
-                asteroid.on('pointerdown', () => {
-                    // Log asteroid tapped
+                obj.setInteractive();
+                obj.on('pointerdown', () => {
                     this.updateGameState();
-                    this.logger.logEvent('asteroid_tapped', {
+                    this.logger.logEvent('answerObject_tapped', {
                         response: answer,
-                        position: {
-                            x: x,
-                            y: this.gameAreaY + 85
-                        },
-                        asteroidIndex: i,
-                        asteroidSize: scale,
+                        position: { x, y },
+                        answerObjectIndex: i,
+                        answerObjectSize: scale,
                         isCorrect: answer === this.currentQuestion.correctAnswer
                     });
-                    this.checkAnswer(asteroid);
+                    this.checkAnswer(obj);
                 });
             }
         });
@@ -1427,8 +1422,8 @@ export class GameScene extends Phaser.Scene {
         this.clippingBorder.setDepth(1001);
     }
 
-    updateAsteroidClipping() {
-        this.asteroids.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
+    updateAnswerObjectClipping() {
+        this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
             const sprite = asteroid as Phaser.Physics.Arcade.Image;
             const label = sprite.getData('label') as Phaser.GameObjects.Text;
 
@@ -1469,7 +1464,7 @@ export class GameScene extends Phaser.Scene {
         this.timerPaused = true;
 
         this.pausedAsteroidVelocities = [];
-        this.asteroids.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
+        this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
             const sprite = asteroid as Phaser.Physics.Arcade.Image;
             if (sprite.body) {
                 this.pausedAsteroidVelocities.push(sprite.body.velocity.y);
@@ -1746,7 +1741,7 @@ export class GameScene extends Phaser.Scene {
         this.powertoolActive = false;
         this.timerPaused = false;
 
-        this.asteroids.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject, i: number) => {
+        this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject, i: number) => {
             const sprite = asteroid as Phaser.Physics.Arcade.Image;
             if (sprite.body) sprite.setVelocityY(this.pausedAsteroidVelocities[i] || 0);
         });
@@ -1778,8 +1773,6 @@ export class GameScene extends Phaser.Scene {
                     totalTime: totalTime,
                     averageTimePerQuestion: avgTimePerQuestion
                 });
-                this.logger.stopPeriodicUpdates();
-                this.logger.flushEvents();
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
