@@ -1649,7 +1649,7 @@ export class GameScene extends Phaser.Scene {
         const startX = toX(firstAddend);
         const startDot = this.add.circle(startX, lineY, 6, 0x2d89ff).setDepth(2003);
         this.sandboxPopup.add(startDot);
-        const startLabel = this.add.text(startX, lineY + 25, firstAddend.toString(), {
+        const startLabel = this.add.text(startX, lineY - 25, firstAddend.toString(), {
             font: '22px Arial', color: '#222'
         }).setOrigin(0.5).setDepth(2003);
         this.sandboxPopup.add(startLabel);
@@ -1755,7 +1755,7 @@ export class GameScene extends Phaser.Scene {
                 console.log(`Showing final marker at ${sum}`);
                 const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
                 this.sandboxPopup.add(endDot);
-                const endLabel = this.add.text(toX(sum), lineY + 25, sum.toString(), {
+                const endLabel = this.add.text(toX(sum), lineY - 25, sum.toString(), {
                     font: '22px Arial', color: '#222'
                 }).setOrigin(0.5).setDepth(2003);
                 this.sandboxPopup.add(endLabel);
@@ -1804,7 +1804,7 @@ export class GameScene extends Phaser.Scene {
                 // console.log(`Showing final marker at ${sum}`);
                 const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
                 this.sandboxPopup.add(endDot);
-                const endLabel = this.add.text(toX(sum), lineY + 25, sum.toString(), {
+                const endLabel = this.add.text(toX(sum), lineY - 25, sum.toString(), {
                     font: '22px Arial', color: '#222'
                 }).setOrigin(0.5).setDepth(2003);
                 this.sandboxPopup.add(endLabel);
