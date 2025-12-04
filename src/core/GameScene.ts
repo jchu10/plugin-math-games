@@ -1556,39 +1556,46 @@ export class GameScene extends Phaser.Scene {
         closeBtn.on('pointerdown', () => this.closeNumberLinePopup());
         this.sandboxPopup.add(closeBtn);
 
-        const title = this.add.text(popupX + popupWidth / 2, popupY + 30, 'Counting On - Number Line', {
+        // console.log('Sandbox popup created:', this.sandboxPopup);
+        // Initialize title; will be modified later depending on question type
+        let title = this.add.text(popupX + popupWidth / 2, popupY + 30, "Let's count!", {
             font: '24px Arial', color: '#222'
         }).setOrigin(0.5).setDepth(2003);
         this.sandboxPopup.add(title);
-
-        console.log('Sandbox popup created:', this.sandboxPopup);
+        // Show the equation at the bottom
+        // const explainText = this.currentQuestion.question.replace('?', sum.toString());
+        // const explain = this.add.text(popupX + popupWidth / 2, popupY + popupHeight - 50, explainText, {
+        //     font: '24px Arial', color: '#222'
+        // }).setOrigin(0.5).setDepth(2004);
 
         // Parse the current question
         let firstAddend = 0, secondAddend = 0;
         const additionMatch = this.currentQuestion?.question.match(/(\d+)\s*\+\s*(\d+)/);
         const subtractionMatch = this.currentQuestion?.question.match(/(\d+)\s*-\s*(\d+)/);
 
-        console.log('Question parsing:');
-        console.log('- Question text:', this.currentQuestion?.question);
-        console.log('- Addition match:', additionMatch);
-        console.log('- Subtraction match:', subtractionMatch);
+        // console.log('Question parsing:');
+        // console.log('- Question text:', this.currentQuestion?.question);
+        // console.log('- Addition match:', additionMatch);
+        // console.log('- Subtraction match:', subtractionMatch);
 
         if (additionMatch) {
             firstAddend = parseInt(additionMatch[1], 10);
             secondAddend = parseInt(additionMatch[2], 10);
-            console.log('Parsed as addition:', firstAddend, '+', secondAddend);
+            title.text = "Let's count on from " + firstAddend + "!";
+            // console.log('Parsed as addition:', firstAddend, '+', secondAddend);
         } else if (subtractionMatch) {
             firstAddend = parseInt(subtractionMatch[1], 10);
             secondAddend = parseInt(subtractionMatch[2], 10);
-            console.log('Parsed as subtraction:', firstAddend, '-', secondAddend);
+            title.text = "Let's count down from " + firstAddend + "!";
+            // console.log('Parsed as subtraction:', firstAddend, '-', secondAddend);
         } else {
             firstAddend = Math.max(0, Math.min(this.currentQuestion.correctAnswer, 10));
             secondAddend = this.currentQuestion.correctAnswer - firstAddend;
-            console.log('Fallback parsing:', firstAddend, '+', secondAddend);
+            // console.log('Fallback parsing:', firstAddend, '+', secondAddend);
         }
 
         const sum = this.currentQuestion.correctAnswer;
-        console.log('Final values - firstAddend:', firstAddend, 'secondAddend:', secondAddend, 'sum:', sum);
+        // console.log('Final values - firstAddend:', firstAddend, 'secondAddend:', secondAddend, 'sum:', sum);
 
         // "Counting on" method: 
         // Left end = minimum number rounded down to nearest ten
@@ -1642,8 +1649,8 @@ export class GameScene extends Phaser.Scene {
         const startX = toX(firstAddend);
         const startDot = this.add.circle(startX, lineY, 6, 0x2d89ff).setDepth(2003);
         this.sandboxPopup.add(startDot);
-        const startLabel = this.add.text(startX, lineY - 25, firstAddend.toString(), {
-            font: '18px Arial', color: '#222'
+        const startLabel = this.add.text(startX, lineY + 25, firstAddend.toString(), {
+            font: '22px Arial', color: '#222'
         }).setOrigin(0.5).setDepth(2003);
         this.sandboxPopup.add(startLabel);
 
@@ -1653,11 +1660,11 @@ export class GameScene extends Phaser.Scene {
         }
 
         // Draw jumps using "counting on" method
-        const drawJump = (from: number, by: number, color: number, label: string, isUnitCount: boolean = false) => {
+        const drawJump = (from: number, by: number, color: number, label: string) => {
             const startX = toX(from);
             const endX = toX(from + by);
             const midX = (startX + endX) / 2;
-            const height = isUnitCount ? 20 : 40; // Smaller height for unit counts
+            const height = by === 1 ? 20 : 40; // Smaller height for unit counts
 
             arrow.lineStyle(3, color, 1);
 
@@ -1676,11 +1683,26 @@ export class GameScene extends Phaser.Scene {
             arrow.strokePath();
 
             if (label) {
-                const lblObj = this.add.text(midX, lineY - height - 20, label, {
+                // "-1" "+1" label at the top of the arc
+                const lblObj = this.add.text(midX, lineY - 40, label, {
                     font: '16px Arial', color: '#222', backgroundColor: '#ffffffaa',
                     padding: { left: 4, right: 4, top: 2, bottom: 2 }
                 }).setOrigin(0.5).setDepth(2004);
                 if (this.sandboxPopup) this.sandboxPopup.add(lblObj);
+                // label fades after 500ms delay
+                this.time.delayedCall(500, () => {
+                    if (lblObj) {
+                        this.tweens.add({
+                            targets: lblObj,
+                            alpha: 0,
+                            duration: 400,
+                            ease: 'Power1',
+                            onComplete: () => {
+                                lblObj.destroy();
+                            }
+                        });
+                    }
+                });
             }
         };
 
@@ -1692,33 +1714,33 @@ export class GameScene extends Phaser.Scene {
             let animationDelay = 0;
             let currentPos = firstAddend;
 
-            console.log(`Subtraction animation: ${firstAddend} - ${secondAddend} = ${sum}`);
-            console.log(`Tens to subtract: ${tensToSubtract}, Units to subtract: ${unitsToSubtract}`);
+            // console.log(`Subtraction animation: ${firstAddend} - ${secondAddend} = ${sum}`);
+            // console.log(`Tens to subtract: ${tensToSubtract}, Units to subtract: ${unitsToSubtract}`);
 
             // Draw 10-count jumps (blue) first - animate each one going backwards
             for (let i = 0; i < tensToSubtract; i++) {
                 const jumpStart = currentPos;
-                console.log(`Scheduling 10-count jump ${i + 1}: from ${jumpStart} to ${jumpStart - 10} at delay ${animationDelay}ms`);
+                // console.log(`Scheduling 10-count jump ${i + 1}: from ${jumpStart} to ${jumpStart - 10} at delay ${animationDelay}ms`);
                 this.time.delayedCall(animationDelay, () => {
-                    console.log(`Executing 10-count jump: from ${jumpStart} to ${jumpStart - 10}`);
+                    // console.log(`Executing 10-count jump: from ${jumpStart} to ${jumpStart - 10}`);
                     if (this.sandboxPopup) {
-                        drawJump(jumpStart, -10, 0x2d89ff, `-10`, false);
+                        drawJump(jumpStart, -10, 0x2d89ff, '-' + (10 + (i * 10)));
                     } else {
                         console.log('ERROR: sandboxPopup is undefined during animation!');
                     }
                 });
                 currentPos -= 10;
-                animationDelay += 1200; // 1200ms delay between each 10-count
+                animationDelay += 800; // 800ms delay between each 10-count
             }
 
             // Draw unit count jumps (red) one at a time - animate each one going backwards
             for (let i = 0; i < unitsToSubtract; i++) {
                 const jumpStart = currentPos - i;
-                console.log(`Scheduling unit jump ${i + 1}: from ${jumpStart} to ${jumpStart - 1} at delay ${animationDelay}ms`);
+                // console.log(`Scheduling unit jump ${i + 1}: from ${jumpStart} to ${jumpStart - 1} at delay ${animationDelay}ms`);
                 this.time.delayedCall(animationDelay, () => {
-                    console.log(`Executing unit jump: from ${jumpStart} to ${jumpStart - 1}`);
+                    // console.log(`Executing unit jump: from ${jumpStart} to ${jumpStart - 1}`);
                     if (this.sandboxPopup) {
-                        drawJump(jumpStart, -1, 0xff4444, `-1`, true);
+                        drawJump(jumpStart, -1, 0xff4444, '-' + (1 + i));
                     } else {
                         console.log('ERROR: sandboxPopup is undefined during animation!');
                     }
@@ -1731,10 +1753,10 @@ export class GameScene extends Phaser.Scene {
             this.time.delayedCall(animationDelay + 400, () => {
                 if (!this.sandboxPopup) return;
                 console.log(`Showing final marker at ${sum}`);
-                const endDot = this.add.circle(toX(sum), lineY, 6, 0xff4444).setDepth(2003);
+                const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
                 this.sandboxPopup.add(endDot);
-                const endLabel = this.add.text(toX(sum), lineY - 25, sum.toString(), {
-                    font: '18px Arial', color: '#222'
+                const endLabel = this.add.text(toX(sum), lineY + 25, sum.toString(), {
+                    font: '22px Arial', color: '#222'
                 }).setOrigin(0.5).setDepth(2003);
                 this.sandboxPopup.add(endLabel);
             });
@@ -1742,8 +1764,8 @@ export class GameScene extends Phaser.Scene {
             console.log('=== ENTERING ADDITION ANIMATION ===');
             let animationDelay = 0;
 
-            console.log(`Addition animation: ${firstAddend} + ${secondAddend} = ${sum}`);
-            console.log(`Tens count: ${tensCount}, Units count: ${unitsCount}`);
+            // console.log(`Addition animation: ${firstAddend} + ${secondAddend} = ${sum}`);
+            // console.log(`Tens count: ${tensCount}, Units count: ${unitsCount}`);
 
             // Draw 10-count jumps (blue) first - animate each one
             for (let i = 0; i < tensCount; i++) {
@@ -1752,12 +1774,12 @@ export class GameScene extends Phaser.Scene {
                 this.time.delayedCall(animationDelay, () => {
                     console.log(`Executing 10-count jump: from ${jumpStart} to ${jumpStart + 10}`);
                     if (this.sandboxPopup) {
-                        drawJump(jumpStart, 10, 0x2d89ff, `+10`, false);
+                        drawJump(jumpStart, 10, 0x2d89ff, '+' + (10 + (i * 10)));
                     } else {
-                        console.log('ERROR: sandboxPopup is undefined during animation!');
+                        // console.log('ERROR: sandboxPopup is undefined during animation!');
                     }
                 });
-                animationDelay += 1200; // 1200ms delay between each 10-count
+                animationDelay += 800; // 800ms delay between each 10-count
             }
 
             // Draw unit count jumps (red) one at a time - animate each one
@@ -1767,7 +1789,7 @@ export class GameScene extends Phaser.Scene {
                 this.time.delayedCall(animationDelay, () => {
                     console.log(`Executing unit jump: from ${jumpStart} to ${jumpStart + 1}`);
                     if (this.sandboxPopup) {
-                        drawJump(jumpStart, 1, 0xff4444, `+1`, true);
+                        drawJump(jumpStart, 1, 0xff4444, '+' + (1 + (i * 1)));
                     } else {
                         console.log('ERROR: sandboxPopup is undefined during animation!');
                     }
@@ -1779,22 +1801,24 @@ export class GameScene extends Phaser.Scene {
             console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
             this.time.delayedCall(animationDelay + 400, () => {
                 if (!this.sandboxPopup) return;
-                console.log(`Showing final marker at ${sum}`);
+                // console.log(`Showing final marker at ${sum}`);
                 const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
                 this.sandboxPopup.add(endDot);
-                const endLabel = this.add.text(toX(sum), lineY - 25, sum.toString(), {
-                    font: '18px Arial', color: '#222'
+                const endLabel = this.add.text(toX(sum), lineY + 25, sum.toString(), {
+                    font: '22px Arial', color: '#222'
                 }).setOrigin(0.5).setDepth(2003);
                 this.sandboxPopup.add(endLabel);
+                // Only show this gotitbtn after all animations are done
+                // Add a button displaying "Got it!"
+                // const gotItBtn = this.add.text(popupX + popupWidth / 2, popupY + popupHeight - 40, 'Got it!', {
+                //     font: '24px Arial', color: '#fff', backgroundColor: '#28a745',
+                //     padding: { left: 16, right: 16, top: 8, bottom: 8 }
+                // }).setOrigin(0.5).setInteractive().setDepth(2004);
+                // gotItBtn.on('pointerdown', () => this.closeNumberLinePopup());
+                // this.sandboxPopup.add(gotItBtn);// this.sandboxPopup.add(explain);
             });
         }
 
-        // Show the equation at the bottom
-        const explainText = this.currentQuestion.question.replace('?', sum.toString());
-        const explain = this.add.text(popupX + popupWidth / 2, popupY + popupHeight - 50, explainText, {
-            font: '24px Arial', color: '#222'
-        }).setOrigin(0.5).setDepth(2004);
-        this.sandboxPopup.add(explain);
     }
 
     private closeNumberLinePopup() {
