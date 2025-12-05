@@ -44,9 +44,9 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
         const onStartGame = (payload: any) => {
             setGameState('playing');
             if (gameRef.current) {
-                gameRef.current.scene.stop('GameOver');
+                // gameRef.current.scene.stop('GameOver');
                 gameRef.current.scene.stop('GameWelcome');
-                gameRef.current.scene.start('GameScene', gameConfig );
+                gameRef.current.scene.start('GameScene', gameConfig);
             }
         };
 
@@ -54,7 +54,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
         const onGameOver = (payload: any) => {
             setGameState('gameover');
             if (gameRef.current) {
-                gameRef.current.scene.stop('GameScene');
+                // gameRef.current.scene.stop('GameScene');
                 gameRef.current.scene.start('GameOver', gameConfig);
             }
         };

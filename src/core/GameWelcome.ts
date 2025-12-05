@@ -82,6 +82,8 @@ export class GameWelcome extends Scene {
 
             this.start_button.setInteractive({ useHandCursor: true });
             this.start_button.on('pointerdown', () => {
+                // disable start button
+                this.start_button.disableInteractive();
                 this.game.events.emit('StartGame')
             });
         } else {
@@ -94,6 +96,8 @@ export class GameWelcome extends Scene {
             // Listen for the spacebar key to start the game
             const spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
             spaceKey.on('down', () => {
+                // stop listening to avoid multiple triggers
+                spaceKey.off('down');
                 this.game.events.emit('StartGame')
             });
         }

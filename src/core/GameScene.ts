@@ -321,8 +321,13 @@ export class GameScene extends Phaser.Scene {
                     });
                     this.logger.cleanup();
 
-                    // Show time's up message and delay before game over
+                    // Show time's up message
                     this.showTimesUpMessage();
+
+                    // switch to game over screen
+                    this.time.delayedCall(1500, () => {
+                        this.game.events.emit('GameOver');
+                    });
                 }
             }
         }
@@ -684,33 +689,6 @@ export class GameScene extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5).setDepth(3001);
         this.feedbackPopup.add(titleText);
-
-        // Auto-close after delay
-        this.time.delayedCall(2000, () => {
-            this.feedbackPopup?.destroy();
-            this.feedbackPopup = undefined;
-
-            // Log game over
-            const totalTime = Date.now() - this.gameStartTime;
-            const avgTimePerQuestion = (this.correctCount + this.incorrectCount) > 0
-                ? totalTime / (this.correctCount + this.incorrectCount)
-                : 0;
-
-            this.updateGameState();
-            this.logger.logEvent('game_over', {
-                reason: 'time_up',
-                questionsShown: this.questionsShown,
-                questionsAnswered: this.correctCount + this.incorrectCount,
-                correctCount: this.correctCount,
-                incorrectCount: this.incorrectCount,
-                totalHintsUsed: this.hintUses,
-                totalTime: totalTime,
-                averageTimePerQuestion: avgTimePerQuestion
-            });
-            this.logger.cleanup();
-
-            this.game.events.emit('GameOver');
-        });
     }
 
     private showFeedbackPopup(isCorrect: boolean, a: number, b: number, correct: number) {
@@ -882,7 +860,7 @@ export class GameScene extends Phaser.Scene {
         // Reset state
         this.correctCount = 0;
         this.lives = 3;
-        this.timer = 120;
+        this.timer = this.gameConfig.time_limit || 120; // default to 2 minutes
         this.gameOver = false;
         this.transitioning = false;
         this.lastTimerUpdate = 0;
@@ -994,7 +972,8 @@ export class GameScene extends Phaser.Scene {
             });
             this.logger.cleanup();
 
-            this.scene.start('GameOver');
+            // this.scene.start('GameOver');
+            this.game.events.emit('GameOver');
 
         });
 
@@ -1007,7 +986,7 @@ export class GameScene extends Phaser.Scene {
                 `${min}:${sec}`, {
                 font: '28px monospace', color: '#000', fontStyle: 'bold'
             }).setOrigin(1, 0.5).setDepth(1001);
-            console.log("Timer text:", this.timerText.text);
+
         }
 
         // Create hint button based on hint type (positioned in bottom bar)
@@ -1864,7 +1843,8 @@ export class GameScene extends Phaser.Scene {
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
-                    this.scene.start('GameOver');
+                    // this.scene.start('GameOver');
+                    this.game.events.emit('GameOver');
                 });
             } else {
                 this.showNextQuestion();
