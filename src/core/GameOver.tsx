@@ -32,9 +32,14 @@ export class GameOver extends Scene {
         }
     }
 
-    create(data: { backgroundKey?: string; gameConfig?: any } = {}) {
+    preload() {
+        console.log("preloading game over scene with classroom background");
+    this.load.setPath('assets');
+    this.load.image('game_bg_img', 'classroom.png');
+    }
+
+    create(data: {gameConfig?: any} = {}) {
         this.cameras.main.setBackgroundColor('#ffffff');
-        const backgroundKey = data.backgroundKey || 'classroom';
         const gameAreaHeight = Math.floor(this.scale.height * 0.9);
         const gameAreaSize = Math.floor(gameAreaHeight * 1.5);
         const gameAreaX = (this.scale.width - gameAreaSize) / 2;
@@ -43,7 +48,7 @@ export class GameOver extends Scene {
         this.background = this.add.image(
             gameAreaX + gameAreaSize / 2,
             gameAreaY + gameAreaHeight / 2,
-            backgroundKey
+            'game_bg_img'
         );
         this.background.setDisplaySize(gameAreaSize, gameAreaHeight);
         this.background.setOrigin(0.5, 0.5);
@@ -87,12 +92,9 @@ export class GameOver extends Scene {
         ).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         button.on('pointerdown', () => {
-            // Restart the game scene with the original config if available
-            if (data && data.gameConfig) {
-                this.scene.start('GameScene', data.gameConfig);
-            } else {
-                this.scene.start('GameScene');
-            }
+            // Restart the game scene
+            this.game.events.emit('TryAgain')
+            // this.scene.start('GameScene');
         });
     }
 }

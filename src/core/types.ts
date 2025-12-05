@@ -1,11 +1,11 @@
 /// Types used in the Math Games plugin.
 /// No logic and no imports. Defines the shape of data structures.
 
-export type EventType = "question_shown" | "make_response" | "request_hint" | "start_game" | "end_game" | "display_feedback" | "navigate_feedback" | "game_over";
 /**
  * A single user action: either select answer or get hint,
  * with question, accuracy, and a timestamp.
 */
+export type EventType = "show_question" | "make_response" | "request_hint" | "start_game" | "end_game" | "show_feedback" | "navigate_feedback" | "close_feedback" | "game_over";
 export interface LogEvent {
   timestamp: number;
   eventType: EventType;
@@ -38,7 +38,7 @@ export interface Response {
 
 // For the React app to know what's happening
 export enum ReactGameState {
-  MainMenu,
+  GameWelcome,
   Playing,
   GameOver,
 }

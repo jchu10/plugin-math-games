@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Response, ReactGameState, GameConfig, LogEvent } from './core/types';
-import { launchGame } from './core/game';
+import { launchGame } from './core/launchGame';
 import * as Phaser from 'phaser';
 
 const PHASER_CONTAINER_ID = 'phaser-game-container';
@@ -19,117 +19,73 @@ interface MathGamesAppProps {
 
 export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEnd }) => {
     const [score, setScore] = useState(0);
-    const [gameState, setGameState] = useState(ReactGameState.MainMenu);
-    
-    // A ref to hold the Phaser game instance
+    const [gameState, setGameState] = useState<'welcome' | 'playing' | 'gameover'>('welcome');
     const gameRef = useRef<Phaser.Game | null>(null);
-    // Ref to collect history events emitted from Phaser
     const eventsRef = useRef<LogEvent[]>([]);
+    const [phaserReady, setPhaserReady] = useState(false);
 
-    // This effect runs once on component mount to launch the game    
     useEffect(() => {
-        // Only launch if the game isn't already running
         if (gameRef.current) {
-            return () => {}; // Return empty cleanup function
+            return () => {
+                if (gameRef.current) {
+                    gameRef.current.destroy(true);
+                    gameRef.current = null;
+                }
+            };
         }
+        // Launch Phaser game with Welcome scene first
+        gameRef.current = launchGame(PHASER_CONTAINER_ID, gameConfig); // Only pass 2 args
+        setPhaserReady(true);
 
-        // The 'launchGame' function will create the Phaser game
-        // and attach it to the div with ID PHASER_CONTAINER_ID
-        gameRef.current = launchGame(PHASER_CONTAINER_ID, gameConfig);
-
-        // --- This is the bridge from Phaser to React ---
-        // Listen for custom events from the Phaser game
+        // Listen for custom events from Phaser
         const gameEvents = gameRef.current.events;
 
-        const onMathResponse = (result: Response) => {
-            console.log('React received answer result:', result);
-            // Update React state and record event
-            const ev: LogEvent = {
-                timestamp: Date.now(),
-                eventType: 'make_response',
-                payload: result,
-            };
-            eventsRef.current.push(ev);
-            setScore(prev => {
-                // If isCorrect, increase; otherwise leave as-is (or adjust as desired)
-                return result.isCorrect ? prev + 10 : prev;
-            });
+        // Welcome scene triggers game start
+        const onStartGame = (payload: any) => {
+            setGameState('playing');
+            if (gameRef.current) {
+                gameRef.current.scene.stop('GameOver');
+                gameRef.current.scene.stop('GameWelcome');
+                gameRef.current.scene.start('GameScene', gameConfig );
+            }
         };
 
-        const onQuestionShown = (payload: any) => {
-            console.log("React received question shown:", payload);
-            const ev: LogEvent = {
-                timestamp: Date.now(),
-                eventType: 'question_shown',
-                payload,
-            };
-            eventsRef.current.push(ev);
-        };
-
-        const onHintUsed = (payload: any) => {
-            const ev: LogEvent = {
-                timestamp: Date.now(),
-                eventType: 'request_hint',
-                payload,
-            };
-            eventsRef.current.push(ev);
-        };
-
+        // GameScene triggers game over
         const onGameOver = (payload: any) => {
-            // Add a final synthetic event if needed
-            const finalEv: LogEvent = {
-                timestamp: Date.now(),
-                eventType: 'game_over',
-                payload,
-            };
-            eventsRef.current.push(finalEv);
-
-            setGameState(ReactGameState.GameOver);
-
-            // Prepare enriched payload for jsPsych
-            const finishPayload = {
-                events: eventsRef.current,
-                summary: {
-                    score: payload.score,
-                    correctCount: payload.correctCount,
-                    lives: payload.lives,
-                    duration: payload.duration,
-                    config: gameConfig,
-                },
-            };
-
-            console.log("Game over with payload:", finishPayload);
-
-            onGameEnd(finishPayload);
+            setGameState('gameover');
+            if (gameRef.current) {
+                gameRef.current.scene.stop('GameScene');
+                gameRef.current.scene.start('GameOver', gameConfig);
+            }
         };
 
-        // Register listeners
-        gameEvents.on('QuestionShown', onQuestionShown);
-        gameEvents.on('MathResponse', onMathResponse);
-        gameEvents.on('HintUsed', onHintUsed);
-        gameEvents.on('ShowFeedback', onHintUsed);
-        gameEvents.on('GameOver', onGameOver);
-        gameEvents.on('EndGame', onGameOver);
+        // GameOver scene triggers retry
+        const onTryAgain = (payload: any) => {
+            setGameState('playing');
+            if (gameRef.current) {
+                gameRef.current.scene.stop('GameOver');
+                gameRef.current.scene.start('GameScene', gameConfig );
+            }
+        };
 
-        // cleanup on unmount
+        // Register listeners for scene transitions
+        gameEvents.on('StartGame', onStartGame);
+        gameEvents.on('GameOver', onGameOver);
+        gameEvents.on('TryAgain', onTryAgain);
+
+        // Cleanup
         return () => {
             try {
-                gameEvents.off('QuestionShown', onQuestionShown);
-                gameEvents.off('MathResponse', onMathResponse);
-                gameEvents.off('HintUsed', onHintUsed);
-                gameEvents.off('ShowFeedback', onHintUsed);
+                gameEvents.off('StartGame', onStartGame);
                 gameEvents.off('GameOver', onGameOver);
-                gameEvents.off('EndGame', onGameOver);
-            } catch (e) {
-                // ignore if already destroyed
-            }
+                gameEvents.off('TryAgain', onTryAgain);
+            } catch (e) {}
             if (gameRef.current) {
-                // destroy Phaser instance to free resources
                 gameRef.current.destroy(true);
                 gameRef.current = null;
             }
         };
-    }, [gameConfig, onGameEnd]);
+    }, [gameConfig]);
 
     return (
         <div id="phaser-wrapper" style={{
@@ -138,26 +94,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
             height: "100%",
             width: "100%",
         }}>
-            
             <div id={PHASER_CONTAINER_ID} />
-            
-            {gameState === ReactGameState.GameOver && (
-                <div className="game-over-screen">
-                    <h2>Game Over!</h2>
-                    <p>Your final score is: {score}</p>
-                    
-                    <button onClick={() => {
-                        // TODO: Where is this button? Currently Game Over displays, but when clicked, website refreshes.
-                        // Tell Phaser to restart
-                        gameRef.current?.events.emit('restartGame');
-                        eventsRef.current = []; // clear collected events for fresh run
-                        setScore(0);
-                        setGameState(ReactGameState.Playing);
-                    }}>
-                        Play Again
-                    </button>
-                </div>
-            )}
         </div>
     );
 };

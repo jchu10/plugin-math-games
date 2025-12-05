@@ -108,17 +108,16 @@ export class GameScene extends Phaser.Scene {
 
     // The 'init' method receives data passed from 'scene.start'
     public init(data: GameConfig) {
-        console.log('GameScene initializing with config:', data);
         this.gameConfig = data;
     }
-    private restartGame() {
-        console.log('Restarting game...');
-        // Clear history and reset timestamp
-        this.appStartTS = Date.now();
-        this.scene.restart(this.gameConfig);
-        // get a new logger
-        this.logger = getLogger(this.data_site);
-    }
+    // private restartGame() {
+    //     console.log('Restarting game...');
+    //     // Clear history and reset timestamp
+    //     this.appStartTS = Date.now();
+    //     this.scene.restart(this.gameConfig);
+    //     // get a new logger
+    //     this.logger = getLogger(this.data_site);
+    // }
 
     private calculateGameArea() {
         // Game area includes the bottom bar within it
@@ -391,11 +390,7 @@ export class GameScene extends Phaser.Scene {
                     this.logger.cleanup();
 
                     this.time.delayedCall(1000, () => {
-                        this.scene.start('GameOver', {
-                            score: this.correctCount,
-                            backgroundKey: 'game_bg_img',
-                            gameConfig: this.gameConfig,
-                        });
+                        this.game.events.emit('GameOver');
                     });
                 } else {
                     this.showNextQuestion();
@@ -656,11 +651,7 @@ export class GameScene extends Phaser.Scene {
                     this.logger.cleanup();
 
                     this.time.delayedCall(1000, () => {
-                        this.scene.start('GameOver', {
-                            score: this.correctCount,
-                            backgroundKey: 'game_bg_img',
-                        });
-
+                        this.game.events.emit('GameOver');
                     });
                 } else {
                     this.showNextQuestion();
@@ -718,11 +709,7 @@ export class GameScene extends Phaser.Scene {
             });
             this.logger.cleanup();
 
-            this.scene.start('GameOver', {
-                score: this.correctCount,
-                backgroundKey: 'game_bg_img',
-            });
-
+            this.game.events.emit('GameOver');
         });
     }
 
@@ -854,10 +841,8 @@ export class GameScene extends Phaser.Scene {
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
-                    this.scene.start('GameOver', {
-                        score: this.correctCount,
-                        backgroundKey: 'game_bg_img',
-                    });
+                    this.game.events.emit('GameOver');
+
                 });
             } else {
                 this.showNextQuestion();
@@ -888,7 +873,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Ensure progress bar is reset on restart
+        // Ensure progress bar is recreated each time
         if (this.progressContainer) {
             this.progressContainer.destroy();
             this.progressContainer = undefined;
@@ -1009,18 +994,20 @@ export class GameScene extends Phaser.Scene {
             });
             this.logger.cleanup();
 
-            this.scene.start('GameOver', {
-                score: this.correctCount,
-                backgroundKey: 'game_bg_img',
-            });
+            this.scene.start('GameOver');
 
         });
 
         // Timer (top right of game area)
         if (this.gameConfig.show_timer) {
-            this.timerText = this.add.text(this.gameAreaX + this.gameAreaSize - 30, this.gameAreaY + barHeight / 2, '2:00', {
+            const timeLimit = this.gameConfig.time_limit || 120; // default to 2 minutes
+            const min = Math.floor(timeLimit / 60);
+            const sec = (timeLimit % 60).toString().padStart(2, '0');
+            this.timerText = this.add.text(this.gameAreaX + this.gameAreaSize - 30, this.gameAreaY + barHeight / 2,
+                `${min}:${sec}`, {
                 font: '28px monospace', color: '#000', fontStyle: 'bold'
             }).setOrigin(1, 0.5).setDepth(1001);
+            console.log("Timer text:", this.timerText.text);
         }
 
         // Create hint button based on hint type (positioned in bottom bar)
@@ -1141,7 +1128,7 @@ export class GameScene extends Phaser.Scene {
         // Listen for resize events
         this.scale.on('resize', this.handleResize, this);
         // Listen for the restart event from React
-        this.game.events.on('restartGame', this.restartGame, this);
+        // this.game.events.on('restartGame', this.restartGame, this);
 
         // ---- show next question ----
 
@@ -1877,10 +1864,7 @@ export class GameScene extends Phaser.Scene {
                 this.logger.cleanup();
 
                 this.time.delayedCall(1000, () => {
-                    this.scene.start('GameOver', {
-                        score: this.correctCount,
-                        backgroundKey: 'game_bg_img',
-                    });
+                    this.scene.start('GameOver');
                 });
             } else {
                 this.showNextQuestion();
