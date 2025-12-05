@@ -1,4 +1,4 @@
-// React component that wraps the math games.
+// React component that wraps the Phaser game.
 // 1. Manage React-level state (like score and gameState).
 // 2. <optional> Render the UI around the game (like the score display or a "Game Over" message).
 // 3. Render a <div> that Phaser will use as its container.
@@ -14,10 +14,10 @@ const PHASER_CONTAINER_ID = 'phaser-game-container';
 
 interface MathGamesAppProps {
   gameConfig: GameConfig;
-  onFinish: (data: { events: any[]; summary?: any }) => void;
+  onGameEnd: (data: { events: any[]; summary?: any }) => void;
 }
 
-export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish }) => {
+export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEnd }) => {
     const [score, setScore] = useState(0);
     const [gameState, setGameState] = useState(ReactGameState.MainMenu);
     
@@ -41,11 +41,11 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
         // Listen for custom events from the Phaser game
         const gameEvents = gameRef.current.events;
 
-        const onMathResponse = (result: Response & { timestamp?: number; elapsed?: number }) => {
+        const onMathResponse = (result: Response) => {
             console.log('React received answer result:', result);
             // Update React state and record event
             const ev: LogEvent = {
-                timestamp: result.timestamp ?? Date.now(),
+                timestamp: Date.now(),
                 eventType: 'make_response',
                 payload: result,
             };
@@ -57,6 +57,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
         };
 
         const onQuestionShown = (payload: any) => {
+            console.log("React received question shown:", payload);
             const ev: LogEvent = {
                 timestamp: Date.now(),
                 eventType: 'question_shown',
@@ -97,7 +98,9 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
                 },
             };
 
-            onFinish(finishPayload);
+            console.log("Game over with payload:", finishPayload);
+
+            onGameEnd(finishPayload);
         };
 
         // Register listeners
@@ -126,7 +129,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onFinish
                 gameRef.current = null;
             }
         };
-    }, [gameConfig, onFinish]);
+    }, [gameConfig, onGameEnd]);
 
     return (
         <div id="phaser-wrapper" style={{

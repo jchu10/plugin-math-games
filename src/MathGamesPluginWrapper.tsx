@@ -1,3 +1,10 @@
+/**
+ * MathGamesPluginWrapper.tsx - React wrapper for math game trials.
+ *
+ * This component handles the React rendering logic for math game playing trials,
+ * separating it from the pure jsPsych plugin class.
+ */
+
 import React from 'react'; // explicit import for JSX
 import { createRoot } from "react-dom/client";
 import type { JsPsych } from "jspsych";
@@ -11,12 +18,13 @@ export interface StartMathGameTrialParams {
 
 /**
  * Mounts the MathGamesApp into the given display element,
- * and hooks its onFinish callback to jsPsych.finishTrial.
+ * and hooks its onGameEnd callback to jsPsych.finishTrial.
  */
 export function startMathGameTrial(
   display_element: HTMLElement,
   params: StartMathGameTrialParams,
-  jsPsych: JsPsych
+  jsPsych: JsPsych,
+  app_data: any[]
 ) {
   const { gameConfig } = params;
 
@@ -24,19 +32,18 @@ export function startMathGameTrial(
    * Called when the React app signals completion.
    * Finishes the jsPsych trial, returning the action log.
    */
-  const onFinish = (data: { events: any[] }) => {
-    console.log("Math game finished with data:", data); // debug log
-    // TODO: should not end trial as one trial may consist of many rounds. Instead, send data to jsPsych response object.
-    // jsPsych.finishTrial(data);
+  const onGameEnd = (data: { events: any[] }) => {
+    console.log("One round of math game ended with data:", data); // debug log
+    app_data.push(data);
   };
 
   const root = createRoot(display_element);
   root.render(
     <MathGamesApp
       gameConfig={gameConfig}
-      onFinish={(data) => {
+      onGameEnd={(data) => {
         root.unmount();
-        onFinish(data);
+        onGameEnd(data);
       }}
     />
   );

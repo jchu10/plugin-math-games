@@ -57,4 +57,5 @@ export interface GameConfig {
   time_limit: number; // time limit in seconds
   difficulty: QuestionDifficulty; // initial math difficulty
   question_sequence_logic: questionSequence; // how to adjust difficulty
+  show_timer?: boolean; // whether to display timer text
 }

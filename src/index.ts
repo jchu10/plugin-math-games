@@ -35,6 +35,7 @@ const info = <const>{
       type: ParameterType.STRING,
       default: "Done Playing",
     },
+    // GAME CONFIG PARAMETERS
     /** Cover story of the game */
     cover_story: {
       type: ParameterType.SELECT,
@@ -66,9 +67,14 @@ const info = <const>{
       default: "staircase"
     },
     /** Total duration of the game in seconds */
-    time_limit: {
+    game_duration_limit: {
       type: ParameterType.INT,
       default: 120,
+    },
+    /** Whether to show timer text within the game */
+    display_in_game_timer: {
+      type: ParameterType.BOOL,
+      default: false,
     },
     /** Difficulty category of first question in the game */
     difficulty: {
@@ -157,7 +163,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
   static info = info;
   private display: HTMLElement;
   private params: TrialType<Info>;
-  private game_events = [];
+  private app_data = [];
   private start_time;
   private timer_interval;
   private trial_finished_handler;
@@ -176,8 +182,9 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
         hint_type: this.params.hint_type,
         feedback_type: this.params.feedback_type,
         question_sequence_logic: this.params.question_sequence_logic,
-        time_limit: this.params.time_limit,
-        difficulty: this.params.difficulty
+        time_limit: this.params.game_duration_limit,
+        difficulty: this.params.difficulty,
+        show_timer: this.params.display_in_game_timer, // Disable in-game timer text; use external timer if needed
       }
     };
 
@@ -204,8 +211,6 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
     finishButton.classList.add("jspsych-btn");
     finishButton.id = "trial-end";
     finishButton.innerHTML = this.params.finished_button_label;
-    const finishButtonContainer = document.createElement("p");
-    finishButtonContainer.id = "finish-btn";
 
     // Display Ordering
     const promptDiv = document.createElement("div");
@@ -215,30 +220,30 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
 
       if (this.params.prompt_location == "abovecanvas") {
         this.display.appendChild(promptDiv);
-        this.display.appendChild(reactContainer);
-        this.display.appendChild(finishButtonContainer);
         this.display.appendChild(timerContainer);
+        this.display.appendChild(reactContainer);
+        this.display.appendChild(finishButton);
       }
       if (this.params.prompt_location == "belowcanvas") {
         this.display.appendChild(reactContainer);
         this.display.appendChild(promptDiv);
-        this.display.appendChild(finishButtonContainer);
         this.display.appendChild(timerContainer);
+        this.display.appendChild(finishButton);
       }
       if (this.params.prompt_location == "belowbutton") {
         this.display.appendChild(reactContainer);
-        this.display.appendChild(finishButtonContainer);
+        this.display.appendChild(finishButton);
         this.display.appendChild(timerContainer);
         this.display.appendChild(promptDiv);
       }
     } else {
       this.display.appendChild(reactContainer);
-      this.display.appendChild(finishButtonContainer);
       this.display.appendChild(timerContainer);
+      this.display.appendChild(finishButton);
     }
 
     if (this.params.show_finished_button) {
-      finishButtonContainer.appendChild(finishButton);
+      this.display.appendChild(finishButton);
       this.display.querySelector("#trial-end").addEventListener("click", () => {
         this.end_trial("button");
       });
@@ -253,7 +258,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
 
     // #region Control flow ------
     // Launch the math game react app
-    startMathGameTrial(reactContainer, appParams, this.jsPsych);
+    startMathGameTrial(reactContainer, appParams, this.jsPsych, this.app_data);
 
     // start time
     this.start_time = performance.now();
@@ -316,6 +321,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
 
     trial_data.rt = Math.round(performance.now() - this.start_time);
     trial_data.response = response;
+    trial_data.events = this.app_data;
 
     this.jsPsych.finishTrial(trial_data);
 

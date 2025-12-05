@@ -13,7 +13,8 @@ export class GameScene extends Phaser.Scene {
     private appStartTS: number = 0;
 
     // Phaser objects ----
-    private logger = getLogger('MoonMission');
+    private data_site = "local"; // 'local' or 'server'
+    private logger = getLogger(this.data_site);
     private gameStartTime: number = 0;
     private questionStartTime: number = 0;
     private questionsWithHints: string[] = [];
@@ -115,6 +116,8 @@ export class GameScene extends Phaser.Scene {
         // Clear history and reset timestamp
         this.appStartTS = Date.now();
         this.scene.restart(this.gameConfig);
+        // get a new logger
+        this.logger = getLogger(this.data_site);
     }
 
     private calculateGameArea() {
@@ -184,7 +187,7 @@ export class GameScene extends Phaser.Scene {
         });
 
         // Update timer text
-        if (this.timerText) {
+        if (this.gameConfig.show_timer && this.timerText) {
             const timerFontSize = Math.floor(28 * scaleFactor);
             this.timerText.setPosition(this.gameAreaX + this.gameAreaSize - Math.floor(30 * scaleFactor), this.gameAreaY + barHeight / 2);
             this.timerText.setStyle({ fontSize: `${timerFontSize}px` });
@@ -291,9 +294,13 @@ export class GameScene extends Phaser.Scene {
                     this.timer--;
                     const min = Math.floor(this.timer / 60);
                     const sec = (this.timer % 60).toString().padStart(2, '0');
-                    this.timerText.setText(`${min}:${sec}`);
+                    if (this.gameConfig.show_timer && this.timerText) {
+                        this.timerText.setText(`${min}:${sec}`);
+                    }
                 } else {
-                    this.timerText.setText('0:00');
+                    if (this.gameConfig.show_timer && this.timerText) {
+                        this.timerText.setText('0:00');
+                    }
                     this.gameOver = true;
 
                     // Log game over
@@ -1010,9 +1017,11 @@ export class GameScene extends Phaser.Scene {
         });
 
         // Timer (top right of game area)
-        this.timerText = this.add.text(this.gameAreaX + this.gameAreaSize - 30, this.gameAreaY + barHeight / 2, '2:00', {
-            font: '28px monospace', color: '#000', fontStyle: 'bold'
-        }).setOrigin(1, 0.5).setDepth(1001);
+        if (this.gameConfig.show_timer) {
+            this.timerText = this.add.text(this.gameAreaX + this.gameAreaSize - 30, this.gameAreaY + barHeight / 2, '2:00', {
+                font: '28px monospace', color: '#000', fontStyle: 'bold'
+            }).setOrigin(1, 0.5).setDepth(1001);
+        }
 
         // Create hint button based on hint type (positioned in bottom bar)
         if (this.gameConfig.hint_type === 'powerup') {
@@ -1203,7 +1212,7 @@ export class GameScene extends Phaser.Scene {
         this.questionText.setText(this.currentQuestion.question);
 
         // Emit a QuestionShown event
-        this.events.emit('QuestionShown', this.currentQuestion);
+        this.game.events.emit('QuestionShown', this.currentQuestion);
 
         this.gameOver = false;
         this.lastTimerUpdate = 0;
@@ -1371,6 +1380,13 @@ export class GameScene extends Phaser.Scene {
                         answerObjectSize: scale,
                         isCorrect: answer === this.currentQuestion.correctAnswer
                     });
+                    this.game.events.emit('MathResponse',
+                        {
+                            question: this.currentQuestion,
+                            selectedAnswer: answer,
+                            isCorrect: answer === this.currentQuestion.correctAnswer
+                        });
+
                     this.checkAnswer(obj);
                 });
             }
