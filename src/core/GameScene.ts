@@ -122,7 +122,7 @@ export class GameScene extends Phaser.Scene {
 
     private calculateGameArea() {
         // Game area includes the bottom bar within it
-        this.gameAreaHeight = Math.floor(this.scale.height * 0.9);
+        this.gameAreaHeight = Math.floor(this.scale.height - 10);
         this.gameAreaSize = Math.floor(this.gameAreaHeight * 1.5);
         this.gameAreaX = (this.scale.width - this.gameAreaSize) / 2;
         this.gameAreaY = (this.scale.height - this.gameAreaHeight) / 2;

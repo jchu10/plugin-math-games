@@ -10,7 +10,7 @@ export class GameOver extends Scene {
     }
 
     private handleResize() {
-        const gameAreaHeight = Math.floor(this.scale.height * 0.9);
+        const gameAreaHeight = Math.floor(this.scale.height -10);
         const gameAreaSize = Math.floor(gameAreaHeight * 1.5);
         const gameAreaX = (this.scale.width - gameAreaSize) / 2;
         const gameAreaY = (this.scale.height - gameAreaHeight) / 2;
