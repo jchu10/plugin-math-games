@@ -80,27 +80,24 @@ export class GameWelcome extends Scene {
             this.print_welcome_message(welcome_text_content);
             this.print_start_button('Click here to start');
 
-            this.start_button.setInteractive({ useHandCursor: true });
-            this.start_button.on('pointerdown', () => {
-                // disable start button
-                this.start_button.disableInteractive();
-                this.game.events.emit('StartGame')
-            });
         } else {
             // this.gameConfig.controls === 'arrowKeys'
             welcome_text_content += 'Use LEFT/RIGHT arrow keys to move the pencil.\nUse SPACE to toss the pencil at an idea cloud.';
 
             this.print_welcome_message(welcome_text_content);
             this.print_start_button('Press SPACE to start');
-
-            // Listen for the spacebar key to start the game
-            const spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-            spaceKey.on('down', () => {
-                // stop listening to avoid multiple triggers
-                spaceKey.off('down');
-                this.game.events.emit('StartGame')
-            });
         }
+
+        this.start_button.setInteractive({ useHandCursor: true });
+        this.start_button.on('pointerdown', () => {
+            // disable start button
+            this.start_button.disableInteractive();
+            this.scene.start('GameScene', this.gameConfig);
+            // this.game.events.emit('StartGame')
+        });
+
+        // Listen for resize events
+        this.scale.on('resize', this.handleResize, this);
     }
 
     private print_welcome_message(text) {

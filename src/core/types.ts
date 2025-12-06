@@ -36,13 +36,6 @@ export interface Response {
   isCorrect: boolean;
 }
 
-// For the React app to know what's happening
-export enum ReactGameState {
-  GameWelcome,
-  Playing,
-  GameOver,
-}
-
 export type gameVersion = "MoonMissionGame" | "HomeworkHelperGame";
 export type gameControls = "arrowKeys" | "tapToSelect";
 export type hintType = "none" | "powerup" | "stepByStep";

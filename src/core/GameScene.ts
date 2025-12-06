@@ -323,11 +323,7 @@ export class GameScene extends Phaser.Scene {
 
                     // Show time's up message
                     this.showTimesUpMessage();
-
-                    // switch to game over screen
-                    this.time.delayedCall(1500, () => {
-                        this.game.events.emit('GameOver');
-                    });
+                    this.triggerGameOverTransition();
                 }
             }
         }
@@ -393,10 +389,7 @@ export class GameScene extends Phaser.Scene {
                         averageTimePerQuestion: avgTimePerQuestion
                     });
                     this.logger.cleanup();
-
-                    this.time.delayedCall(1000, () => {
-                        this.game.events.emit('GameOver');
-                    });
+                    this.triggerGameOverTransition();
                 } else {
                     this.showNextQuestion();
                 }
@@ -655,9 +648,7 @@ export class GameScene extends Phaser.Scene {
                     });
                     this.logger.cleanup();
 
-                    this.time.delayedCall(1000, () => {
-                        this.game.events.emit('GameOver');
-                    });
+                    this.triggerGameOverTransition();
                 } else {
                     this.showNextQuestion();
                 }
@@ -666,6 +657,16 @@ export class GameScene extends Phaser.Scene {
             // Explanation feedback - show popup with view solution button
             this.showFeedbackPopup(isCorrect, a, b, this.currentQuestion.correctAnswer);
         }
+    }
+
+    /**
+     * Triggers the delayed transition to the GameOver scene.
+     */
+    private triggerGameOverTransition() {
+        this.time.delayedCall(1000, () => {
+            this.game.events.emit('GameOver');
+            this.scene.start('GameOver');
+        });
     }
 
     private showTimesUpMessage() {
@@ -817,11 +818,7 @@ export class GameScene extends Phaser.Scene {
                     averageTimePerQuestion: avgTimePerQuestion
                 });
                 this.logger.cleanup();
-
-                this.time.delayedCall(1000, () => {
-                    this.game.events.emit('GameOver');
-
-                });
+                this.triggerGameOverTransition();
             } else {
                 this.showNextQuestion();
             }
@@ -972,8 +969,7 @@ export class GameScene extends Phaser.Scene {
             });
             this.logger.cleanup();
 
-            // this.scene.start('GameOver');
-            this.game.events.emit('GameOver');
+            this.scene.start('GameOver');
 
         });
 
@@ -1178,7 +1174,7 @@ export class GameScene extends Phaser.Scene {
         this.questionText.setText(this.currentQuestion.question);
 
         // Emit a QuestionShown event
-        this.game.events.emit('QuestionShown', this.currentQuestion);
+        // this.game.events.emit('QuestionShown', this.currentQuestion);
 
         this.gameOver = false;
         this.lastTimerUpdate = 0;
@@ -1346,12 +1342,12 @@ export class GameScene extends Phaser.Scene {
                         answerObjectSize: scale,
                         isCorrect: answer === this.currentQuestion.correctAnswer
                     });
-                    this.game.events.emit('MathResponse',
-                        {
-                            question: this.currentQuestion,
-                            selectedAnswer: answer,
-                            isCorrect: answer === this.currentQuestion.correctAnswer
-                        });
+                    // this.game.events.emit('MathResponse',
+                    //     {
+                    //         question: this.currentQuestion,
+                    //         selectedAnswer: answer,
+                    //         isCorrect: answer === this.currentQuestion.correctAnswer
+                    //     });
 
                     this.checkAnswer(obj);
                 });
@@ -1841,11 +1837,7 @@ export class GameScene extends Phaser.Scene {
                     averageTimePerQuestion: avgTimePerQuestion
                 });
                 this.logger.cleanup();
-
-                this.time.delayedCall(1000, () => {
-                    // this.scene.start('GameOver');
-                    this.game.events.emit('GameOver');
-                });
+                this.triggerGameOverTransition();
             } else {
                 this.showNextQuestion();
             }

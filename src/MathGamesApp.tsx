@@ -6,7 +6,7 @@
 // 5. Listen for events from the Phaser game to update its own state.
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Response, ReactGameState, GameConfig, LogEvent } from './core/types';
+import { Response, GameConfig, LogEvent } from './core/types';
 import { launchGame } from './core/launchGame';
 import * as Phaser from 'phaser';
 
@@ -25,14 +25,18 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
     const [phaserReady, setPhaserReady] = useState(false);
 
     useEffect(() => {
+        // Only launch if the game isn't already running
         if (gameRef.current) {
-            return () => {
-                if (gameRef.current) {
-                    gameRef.current.destroy(true);
-                    gameRef.current = null;
-                }
-            };
+            return () => {}; // Return empty cleanup function
         }
+        // if (gameRef.current) {
+        //     return () => {
+        //         if (gameRef.current) {
+        //             gameRef.current.destroy(true);
+        //             gameRef.current = null;
+        //         }
+        //     };
+        // }
         // Launch Phaser game with Welcome scene first
         gameRef.current = launchGame(PHASER_CONTAINER_ID, gameConfig); // Only pass 2 args
         setPhaserReady(true);
@@ -40,50 +44,49 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
         // Listen for custom events from Phaser
         const gameEvents = gameRef.current.events;
 
-        // Welcome scene triggers game start
-        const onStartGame = (payload: any) => {
-            setGameState('playing');
-            if (gameRef.current) {
-                // gameRef.current.scene.stop('GameOver');
-                gameRef.current.scene.stop('GameWelcome');
-                gameRef.current.scene.start('GameScene', gameConfig);
-            }
-        };
+        // // Welcome scene triggers game start
+        // const onStartGame = (payload: any) => {
+        //     setGameState('playing');
+        //     if (gameRef.current) {
+        //         // from Welcome to GameScene
 
-        // GameScene triggers game over
-        const onGameOver = (payload: any) => {
-            setGameState('gameover');
-            if (gameRef.current) {
-                // gameRef.current.scene.stop('GameScene');
-                gameRef.current.scene.start('GameOver', gameConfig);
-            }
-        };
+        //     }
+        // };
 
-        // GameOver scene triggers retry
-        const onTryAgain = (payload: any) => {
-            setGameState('playing');
-            if (gameRef.current) {
-                gameRef.current.scene.stop('GameOver');
-                gameRef.current.scene.start('GameScene', gameConfig );
-            }
-        };
+        // // GameScene triggers game over
+        // const onGameOver = (payload: any) => {
+        //     setGameState('gameover');
+        //     if (gameRef.current) {
+        //         // from GameScene to GameOver
+        //     }
+        // };
 
-        // Register listeners for scene transitions
-        gameEvents.on('StartGame', onStartGame);
-        gameEvents.on('GameOver', onGameOver);
-        gameEvents.on('TryAgain', onTryAgain);
+        // // GameOver scene triggers retry
+        // const onTryAgain = (payload: any) => {
+        //     setGameState('playing');
+        //     if (gameRef.current) {
+        //         // from GameOver to GameScene
+        //         // gameRef.current.scene.stop('GameOver');
+        //         // gameRef.current.scene.start('GameScene', gameConfig );
+        //     }
+        // };
 
-        // Cleanup
+        // // Register listeners for scene transitions
+        // gameEvents.on('StartGame', onStartGame);
+        // gameEvents.on('GameOver', onGameOver);
+        // gameEvents.on('TryAgain', onTryAgain);
+
+        // // Cleanup
         return () => {
-            try {
-                gameEvents.off('StartGame', onStartGame);
-                gameEvents.off('GameOver', onGameOver);
-                gameEvents.off('TryAgain', onTryAgain);
-            } catch (e) {}
-            if (gameRef.current) {
-                gameRef.current.destroy(true);
-                gameRef.current = null;
-            }
+        //     try {
+        //         gameEvents.off('StartGame', onStartGame);
+        //         gameEvents.off('GameOver', onGameOver);
+        //         gameEvents.off('TryAgain', onTryAgain);
+        //     } catch (e) {}
+        //     if (gameRef.current) {
+        //         gameRef.current.destroy(true);
+        //         gameRef.current = null;
+        //     }
         };
     }, [gameConfig]);
 

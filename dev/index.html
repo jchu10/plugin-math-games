@@ -53,8 +53,9 @@
             preamble: "<h3>Math Game Trials</h3>",
             game_size: [600, 1000],
             prompt: "<h3>Try this game!</h3>",
-            trial_duration: 10 * 1000, // in milliseconds
-            display_in_game_timer: false
+            game_duration_limit: 30, // in seconds
+            trial_duration: 20 * 1000, // in milliseconds
+            display_in_game_timer: true
         }
 
         jsPsych.run([hello, math_trials, bye]);

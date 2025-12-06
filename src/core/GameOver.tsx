@@ -92,9 +92,13 @@ export class GameOver extends Scene {
         ).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         button.on('pointerdown', () => {
+            // disable button
+            button.disableInteractive();
             // Restart the game scene
-            this.game.events.emit('TryAgain')
-            // this.scene.start('GameScene');
+            this.scene.start('GameScene');
         });
+
+        // Listen for resize events
+        this.scale.on('resize', this.handleResize, this);
     }
 }
