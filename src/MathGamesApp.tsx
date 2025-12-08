@@ -13,8 +13,8 @@ import * as Phaser from 'phaser';
 const PHASER_CONTAINER_ID = 'phaser-game-container';
 
 interface MathGamesAppProps {
-  gameConfig: GameConfig;
-  onGameEnd: (data: { events: any[]; summary?: any }) => void;
+    gameConfig: GameConfig;
+    onGameEnd: (data: { events: any[]; summary?: any }) => void;
 }
 
 export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEnd }) => {
@@ -27,7 +27,7 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
     useEffect(() => {
         // Only launch if the game isn't already running
         if (gameRef.current) {
-            return () => {}; // Return empty cleanup function
+            return () => { }; // Return empty cleanup function
         }
         // if (gameRef.current) {
         //     return () => {
@@ -76,17 +76,17 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
         // gameEvents.on('GameOver', onGameOver);
         // gameEvents.on('TryAgain', onTryAgain);
 
-        // // Cleanup
+        // Cleanup
         return () => {
-        //     try {
-        //         gameEvents.off('StartGame', onStartGame);
-        //         gameEvents.off('GameOver', onGameOver);
-        //         gameEvents.off('TryAgain', onTryAgain);
-        //     } catch (e) {}
-        //     if (gameRef.current) {
-        //         gameRef.current.destroy(true);
-        //         gameRef.current = null;
-        //     }
+            try {
+                // gameEvents.off('StartGame', onStartGame);
+                // gameEvents.off('GameOver', onGameOver);
+                // gameEvents.off('TryAgain', onTryAgain);
+            } catch (e) { }
+            if (gameRef.current) {
+                gameRef.current.destroy(true);
+                gameRef.current = null;
+            }
         };
     }, [gameConfig]);
 

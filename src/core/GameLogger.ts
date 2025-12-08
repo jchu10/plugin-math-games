@@ -23,7 +23,7 @@ export interface GameState {
   status: {
     lives: number;
     score: number;
-    timeRemaining: number;
+    timeElapsed: number;
     gameOver: boolean;
     paused: boolean;
   };
@@ -298,6 +298,9 @@ s per trial   */
     this.stopPeriodicUpdates();
     this.emitRoundBatch(); // Emit final batch before cleanup
     this.flushEvents(); // Save to localStorage for backup
+    // Disable the logger to prevent further logging
+    this.isEnabled = false;
+    this.emitDataCallback = undefined;
     // localStorage.removeItem(`game_log_${this.roundId}`);
   }
 }

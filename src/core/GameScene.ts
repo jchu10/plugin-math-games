@@ -353,6 +353,10 @@ export class GameScene extends Phaser.Scene {
             });
 
             if (allGone && !this.transitioning) {
+                // Resume entities before checking game over or showing next question
+                // This ensures specific pausing logic (like hints) doesn't permanentzly freeze things if we were using it
+                // But specifically for this block, we are just clearing objects.
+
                 if (this.hintActive) {
                     this.answerObjects.getChildren().forEach((a: Phaser.GameObjects.GameObject) => {
                         const s = a as Phaser.Physics.Arcade.Image;
@@ -657,7 +661,7 @@ export class GameScene extends Phaser.Scene {
     private triggerGameOverTransition() {
         this.time.delayedCall(1000, () => {
             this.game.events.emit('GameOver');
-            this.scene.start('GameOver');
+            this.scene.start('GameOver', this.gameConfig);
         });
     }
 
@@ -687,6 +691,7 @@ export class GameScene extends Phaser.Scene {
     private showFeedbackPopup(isCorrect: boolean, a: number, b: number, correct: number) {
         this.clearAnswerObjects();
         this.feedbackActive = true;
+        this.pauseGameEntities();
 
         const popupWidth = Math.min(this.gameAreaSize * 0.8, 500);
         const popupHeight = Math.min(this.gameAreaHeight * 0.6, 300);
@@ -764,6 +769,7 @@ export class GameScene extends Phaser.Scene {
                 this.feedbackPopup?.destroy();
                 this.feedbackPopup = undefined;
                 this.feedbackActive = false;
+                this.resumeGameEntities(); // Restore state before switching
                 this.powerupFromFeedback = true;
                 this.openNumberLinePopup();
             });
@@ -790,6 +796,7 @@ export class GameScene extends Phaser.Scene {
             this.feedbackPopup?.destroy();
             this.feedbackPopup = undefined;
             this.feedbackActive = false;
+            this.resumeGameEntities();
             // Check if game should end (no lives left)
             if (this.lives === 0) {
                 // Log game over
@@ -935,6 +942,7 @@ export class GameScene extends Phaser.Scene {
             padding: { left: 16, right: 16, top: 8, bottom: 8 }
         }).setOrigin(0, 0.5).setDepth(1002).setInteractive();
         this.endBtn.on('pointerdown', () => {
+            if (this.sandboxActive || this.feedbackActive) return;
             const timeElapsed = Date.now() - this.gameStartTime;
             this.updateGameState();
             this.logger.logEvent('end_game_pressed', {
@@ -961,7 +969,7 @@ export class GameScene extends Phaser.Scene {
             });
             this.logger.cleanup();
 
-            this.scene.start('GameOver');
+            this.scene.start('GameOver', this.gameConfig);
 
         });
 
@@ -983,6 +991,12 @@ export class GameScene extends Phaser.Scene {
                 .setOrigin(0, 1).setScale(0.45 * scaleFactor).setInteractive().setDepth(1002);
             this.hintIcon.clearTint();
             this.hintIcon.on('pointerdown', () => {
+                if (this.feedbackActive) return; // Allow hint if sandbox is active? No, sandbox implies hint usage or separate state.
+                // Actually hint is "powerup" type, separate from sandbox "stepByStep". 
+                // If sandbox is active, we probably shouldn't allow another powerup?
+                // The task says "interact with any in-game objects other than the popup screen".
+                if (this.sandboxActive || this.feedbackActive) return;
+
                 if (this.hintUses < this.maxHints && !this.hintActive && !this.hintUsedThisQuestion) {
                     this.hintUses++;
                     this.hintActive = true;
@@ -1026,6 +1040,7 @@ export class GameScene extends Phaser.Scene {
                 .setOrigin(0, 1).setScale(0.45 * scaleFactor).setInteractive().setDepth(1002);
             this.powertoolIcon.clearTint();
             this.powertoolIcon.on('pointerdown', () => {
+                if (this.sandboxActive || this.feedbackActive) return; // Prevent double clicking or clicking during feedback
                 if (this.powertoolUses < this.maxPowertool && !this.sandboxActive && !this.powertoolUsedThisQuestion) {
                     this.powertoolUses++;
                     this.powertoolUsedThisQuestion = true;
@@ -1080,6 +1095,7 @@ export class GameScene extends Phaser.Scene {
 
             // Event-based key logging for arrow keys
             this.input.keyboard?.on('keydown-LEFT', () => {
+                if (this.sandboxActive || this.feedbackActive) return;
                 if (!this.keyDownTimes.has('left')) {
                     this.keyDownTimes.set('left', Date.now());
                     this.updateGameState();
@@ -1104,6 +1120,7 @@ export class GameScene extends Phaser.Scene {
             });
 
             this.input.keyboard?.on('keydown-RIGHT', () => {
+                if (this.sandboxActive || this.feedbackActive) return;
                 if (!this.keyDownTimes.has('right')) {
                     this.keyDownTimes.set('right', Date.now());
                     this.updateGameState();
@@ -1129,6 +1146,7 @@ export class GameScene extends Phaser.Scene {
 
             // Space key logging (for laser shooting)
             this.input.keyboard?.on('keydown-SPACE', () => {
+                if (this.sandboxActive || this.feedbackActive) return;
                 if (!this.keyDownTimes.has('space')) {
                     this.keyDownTimes.set('space', Date.now());
                     this.updateGameState();
@@ -1172,6 +1190,9 @@ export class GameScene extends Phaser.Scene {
         // Listen for the restart event from React
         // this.game.events.on('restartGame', this.restartGame, this);
 
+        // Listen for shutdown event to cleanup resources when scene stops
+        this.events.once('shutdown', this.shutdown, this);
+
         // ---- show next question ----
 
         this.showNextQuestion();
@@ -1199,7 +1220,7 @@ export class GameScene extends Phaser.Scene {
             status: {
                 lives: this.lives,
                 score: this.correctCount,
-                timeRemaining: this.timer * 1000,
+                timeElapsed: Date.now() - this.gameStartTime,
                 gameOver: this.gameOver || false,
                 paused: this.sandboxActive || this.timerPaused || false
             },
@@ -1417,6 +1438,7 @@ export class GameScene extends Phaser.Scene {
             if (this.gameConfig.controls === 'tapToSelect') {
                 obj.setInteractive();
                 obj.on('pointerdown', () => {
+                    if (this.sandboxActive || this.feedbackActive) return;
                     this.updateGameState();
                     this.logger.logEvent('answerObject_tapped', {
                         response: answer,
@@ -1442,6 +1464,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     shootLaser() {
+        if (this.sandboxActive || this.feedbackActive) return;
         // Allow multiple lasers with 1 second delay between shots
         const timeSinceLastShot = this.time.now - this.lastLaserShotTime;
         if (timeSinceLastShot < 1000) return;
@@ -1579,15 +1602,8 @@ export class GameScene extends Phaser.Scene {
         });
     }
 
-    // Number line popup for step-by-step helper (games 5-8) - "Counting On" method
-    private openNumberLinePopup() {
-        console.log('=== OPENING NUMBER LINE POPUP ===');
-        console.log('Current question:', this.currentQuestion);
-
-        this.sandboxActive = true;
-        this.powertoolActive = true;
+    private pauseGameEntities() {
         this.timerPaused = true;
-
         this.pausedAsteroidVelocities = [];
         this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject) => {
             const sprite = asteroid as Phaser.Physics.Arcade.Image;
@@ -1598,6 +1614,25 @@ export class GameScene extends Phaser.Scene {
                 this.pausedAsteroidVelocities.push(0);
             }
         });
+    }
+
+    private resumeGameEntities() {
+        this.timerPaused = false;
+        this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject, i: number) => {
+            const sprite = asteroid as Phaser.Physics.Arcade.Image;
+            if (sprite.body) sprite.setVelocityY(this.pausedAsteroidVelocities[i] || 0);
+        });
+        this.pausedAsteroidVelocities = [];
+    }
+
+    // Number line popup for step-by-step helper (games 5-8) - "Counting On" method
+    private openNumberLinePopup() {
+        console.log('=== OPENING NUMBER LINE POPUP ===');
+        console.log('Current question:', this.currentQuestion);
+
+        this.sandboxActive = true;
+        this.powertoolActive = true;
+        this.pauseGameEntities();
 
         const popupWidth = Math.min(this.gameAreaSize * 0.8, 500);
         const popupHeight = Math.min(this.gameAreaHeight * 0.6, 300);
@@ -1813,10 +1848,10 @@ export class GameScene extends Phaser.Scene {
             }
 
             // Mark the end point (difference) after all animations
-            console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
+            // console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
             this.time.delayedCall(animationDelay + 400, () => {
                 if (!this.sandboxPopup) return;
-                console.log(`Showing final marker at ${sum}`);
+                // console.log(`Showing final marker at ${sum}`);
                 const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
                 this.sandboxPopup.add(endDot);
                 const endLabel = this.add.text(toX(sum), lineY - 25, sum.toString(), {
@@ -1849,9 +1884,9 @@ export class GameScene extends Phaser.Scene {
             // Draw unit count jumps (red) one at a time - animate each one
             for (let i = 0; i < unitsCount; i++) {
                 const jumpStart = firstAddend + (tensCount * 10) + i;
-                console.log(`Scheduling unit jump ${i + 1}: from ${jumpStart} to ${jumpStart + 1} at delay ${animationDelay}ms`);
+                // console.log(`Scheduling unit jump ${i + 1}: from ${jumpStart} to ${jumpStart + 1} at delay ${animationDelay}ms`);
                 this.time.delayedCall(animationDelay, () => {
-                    console.log(`Executing unit jump: from ${jumpStart} to ${jumpStart + 1}`);
+                    // console.log(`Executing unit jump: from ${jumpStart} to ${jumpStart + 1}`);
                     if (this.sandboxPopup) {
                         drawJump(jumpStart, 1, 0xff4444, '+' + (1 + (i * 1)));
                     } else {
@@ -1862,7 +1897,7 @@ export class GameScene extends Phaser.Scene {
             }
 
             // Mark the end point (sum) after all animations
-            console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
+            // console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
             this.time.delayedCall(animationDelay + 400, () => {
                 if (!this.sandboxPopup) return;
                 // console.log(`Showing final marker at ${sum}`);
@@ -1888,12 +1923,7 @@ export class GameScene extends Phaser.Scene {
     private closeNumberLinePopup() {
         this.sandboxActive = false;
         this.powertoolActive = false;
-        this.timerPaused = false;
-
-        this.answerObjects.getChildren().forEach((asteroid: Phaser.GameObjects.GameObject, i: number) => {
-            const sprite = asteroid as Phaser.Physics.Arcade.Image;
-            if (sprite.body) sprite.setVelocityY(this.pausedAsteroidVelocities[i] || 0);
-        });
+        this.resumeGameEntities();
 
         if (this.sandboxPopup) {
             this.sandboxPopup.destroy();
@@ -1930,6 +1960,29 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
+    shutdown() {
+        console.log('🔴 GameScene.shutdown() called - cleaning up keyboard listeners');
+
+        // Explicitly remove keyboard listeners by event name
+        if (this.input.keyboard) {
+            this.input.keyboard.off('keydown-LEFT');
+            this.input.keyboard.off('keyup-LEFT');
+            this.input.keyboard.off('keydown-RIGHT');
+            this.input.keyboard.off('keyup-RIGHT');
+            this.input.keyboard.off('keydown-SPACE');
+            this.input.keyboard.off('keyup-SPACE');
+        }
+
+        if (this.logger) {
+            this.logger.cleanup();
+        }
+        if (this.sandboxPopup) {
+            this.sandboxPopup.destroy();
+        }
+        if (this.feedbackPopup) {
+            this.feedbackPopup.destroy();
+        }
+    }
 }
 
 
