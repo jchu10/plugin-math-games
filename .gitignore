@@ -4,3 +4,5 @@ dist/**
 dev/assets/**
 examples/assets/**
 src/assets/**
+examples/data/**
+**/todo.md
