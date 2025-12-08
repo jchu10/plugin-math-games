@@ -1,12 +1,18 @@
 import { Scene } from 'phaser';
+import { GameConfig } from './types';
 
 export class GameOver extends Scene {
     background!: Phaser.GameObjects.Image;
     gameover_text!: Phaser.GameObjects.Text;
     private gameAreaBorder!: Phaser.GameObjects.Graphics;
+    private gameConfig!: GameConfig;
 
     constructor() {
         super('GameOver');
+    }
+
+    public init(data: GameConfig) {
+        this.gameConfig = data;
     }
 
     private handleResize() {
@@ -33,9 +39,15 @@ export class GameOver extends Scene {
     }
 
     preload() {
-        console.log("preloading game over scene with classroom background");
         this.load.setPath('assets');
-        this.load.image('game_bg_img', 'classroom.png');
+        console.log("gameover gameConfig", this.gameConfig);
+        if (this.gameConfig?.cover_story === "MoonMissionGame") {
+            this.load.image('game_bg_img', 'starrynight.png');
+        } else if (this.gameConfig?.cover_story === "HomeworkHelperGame") {
+            this.load.image('game_bg_img', 'classroom.png');
+        } else {
+            console.log("No valid cover_story found, loading default background.");
+        }
     }
 
     create(data: { gameConfig?: any } = {}) {
@@ -95,7 +107,7 @@ export class GameOver extends Scene {
             // disable button
             button.disableInteractive();
             // Restart the game scene
-            this.scene.start('GameScene');
+            this.scene.start('GameScene', this.gameConfig);
         });
 
         // Listen for resize events
