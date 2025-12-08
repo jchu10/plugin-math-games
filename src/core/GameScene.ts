@@ -1034,7 +1034,7 @@ export class GameScene extends Phaser.Scene {
                     const timeSinceQuestionStart = Date.now() - this.questionStartTime;
 
                     this.updateGameState();
-                    this.logger.logEvent('power_tool_activated', {
+                    this.logger.logEvent('hint_pressed', {
                         questionId: questionId,
                         questionNumber: this.correctCount + this.incorrectCount,
                         toolType: 'stepByStep',

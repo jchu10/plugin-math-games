@@ -80,7 +80,6 @@ The following event types are logged during gameplay:
 | `laser_hit` | Laser hits an answer object | `laserPosition` (x, y), `targetAnswer`, `targetPosition` (x, y), `isCorrect` |
 | `answerObject_tapped` | Answer object tapped (tap-to-select mode) | `response`, `position` (x, y), `answerObjectIndex`, `answerObjectSize`, `isCorrect` |
 | `hint_pressed` | Hint button activated | `hintType`, `questionId`, `questionNumber`, `hintNumber`, `timeSinceQuestionStart` (ms), `hintContent` |
-| `power_tool_activated` | Power tool (step-by-step) activated | `questionId`, `questionNumber`, `toolType`, `timeSinceQuestionStart` (ms) |
 | `end_question` | Question round ended | `selectedAnswer`, `correctAnswer`, `isCorrect`, `timeTaken` (ms), `hintUsed`, `lives`, `score` |
 | `life_lost` | Player lost a life | `livesRemaining`, `questionId`, `incorrectAnswer` |
 | `end_game_pressed` | User clicked "End Game" button | `timeElapsed` (ms), `questionsAnswered`, `currentScore` |
