@@ -766,6 +766,15 @@ export class GameScene extends Phaser.Scene {
             this.feedbackPopup.add(viewSolutionText);
 
             viewSolutionBtn.on('pointerdown', () => {
+                // Log show answer button click
+                this.updateGameState();
+                this.logger.logEvent('popup_show_answer_clicked', {
+                    popupType: 'feedback',
+                    questionId: `${this.currentQuestion.question}_${this.currentQuestion.correctAnswer}`,
+                    questionNumber: this.correctCount + this.incorrectCount,
+                    wasCorrect: this.lastAnswerCorrect
+                });
+
                 this.feedbackPopup?.destroy();
                 this.feedbackPopup = undefined;
                 this.feedbackActive = false;
@@ -793,6 +802,15 @@ export class GameScene extends Phaser.Scene {
         this.feedbackPopup.add(nextText);
 
         nextBtn.on('pointerdown', () => {
+            // Log next button click
+            this.updateGameState();
+            this.logger.logEvent('popup_next_clicked', {
+                popupType: 'feedback',
+                questionId: `${this.currentQuestion.question}_${this.currentQuestion.correctAnswer}`,
+                questionNumber: this.correctCount + this.incorrectCount,
+                wasCorrect: this.lastAnswerCorrect
+            });
+
             this.feedbackPopup?.destroy();
             this.feedbackPopup = undefined;
             this.feedbackActive = false;
@@ -1652,7 +1670,17 @@ export class GameScene extends Phaser.Scene {
             font: '32px Arial', color: '#222', backgroundColor: '#fff',
             padding: { left: 8, right: 8, top: 2, bottom: 2 }
         }).setOrigin(0.5, 0).setInteractive().setDepth(2002);
-        closeBtn.on('pointerdown', () => this.closeNumberLinePopup());
+        closeBtn.on('pointerdown', () => {
+            // Log close button click
+            this.updateGameState();
+            this.logger.logEvent('popup_close_clicked', {
+                popupType: 'sandbox',
+                questionId: `${this.currentQuestion.question}_${this.currentQuestion.correctAnswer}`,
+                questionNumber: this.correctCount + this.incorrectCount,
+                fromFeedback: this.powerupFromFeedback
+            });
+            this.closeNumberLinePopup();
+        });
         this.sandboxPopup.add(closeBtn);
 
         // console.log('Sandbox popup created:', this.sandboxPopup);
