@@ -243,7 +243,9 @@ s per trial   */
           timestamp: new Date().toISOString(),
           events: eventsWithoutRoundId,
           summary: {
-            totalEvents: this.events.length
+            totalEvents: this.events.length,
+            totalQuestionsShown: this.events.filter(event => event.eventType === 'question_shown').length,
+            totalAnswersSubmitted: this.events.filter(event => event.eventType === 'answerObject_tapped' || event.eventType === 'laser_hit').length,
           }
         });
       } catch (error) {
