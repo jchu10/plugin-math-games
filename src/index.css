@@ -15,3 +15,9 @@ body {
     justify-content: center;
     align-items: center;
 }
+
+button.jspsych-btn.disabled {
+    cursor: not-allowed;
+    background-color: rgb(202, 202, 202);
+    color: white
+}

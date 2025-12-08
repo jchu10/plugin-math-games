@@ -103,7 +103,7 @@ const info = <const>{
       default: true,
     },
     /**
-     * Minimum time the trial must run before the participant can advance.
+     * Minimum time (ms) the trial must run before the participant can advance.
      * If set, the "Done Playing" button will be disabled until this time has passed.
      */
     min_trial_duration: {
@@ -111,7 +111,7 @@ const info = <const>{
       default: null,
     },
     /**
-     * Maximum time the trial can run before automatically ending.
+     * Maximum time (ms) the trial can run before automatically ending.
      * If set, the trial will end automatically when this time is reached.
      */
     max_trial_duration: {
@@ -229,36 +229,67 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
         this.display.appendChild(promptDiv);
         this.display.appendChild(timerContainer);
         this.display.appendChild(reactContainer);
-        this.display.appendChild(finishButton);
+        if (this.params.show_finished_button) {
+          this.display.appendChild(finishButton);
+          this.display.querySelector("#trial-end").addEventListener("click", () => {
+            this.end_trial("button");
+          });
+
+          if (this.params.min_trial_duration !== null) {
+            // Disable finish button initially if there is a minimum trial duration
+            finishButton.setAttribute("disabled", "true");
+          }
+        }
+
       }
       if (this.params.prompt_location == "belowcanvas") {
         this.display.appendChild(reactContainer);
         this.display.appendChild(promptDiv);
         this.display.appendChild(timerContainer);
-        this.display.appendChild(finishButton);
+        if (this.params.show_finished_button) {
+          this.display.appendChild(finishButton);
+          this.display.querySelector("#trial-end").addEventListener("click", () => {
+            this.end_trial("button");
+          });
+
+          if (this.params.min_trial_duration !== null) {
+            // Disable finish button initially if there is a minimum trial duration
+            finishButton.setAttribute("disabled", "true");
+          }
+        }
+
       }
       if (this.params.prompt_location == "belowbutton") {
         this.display.appendChild(reactContainer);
-        this.display.appendChild(finishButton);
+        if (this.params.show_finished_button) {
+          this.display.appendChild(finishButton);
+          this.display.querySelector("#trial-end").addEventListener("click", () => {
+            this.end_trial("button");
+          });
+
+          if (this.params.min_trial_duration !== null) {
+            // Disable finish button initially if there is a minimum trial duration
+            finishButton.setAttribute("disabled", "true");
+          }
+        }
         this.display.appendChild(timerContainer);
         this.display.appendChild(promptDiv);
       }
     } else {
       this.display.appendChild(reactContainer);
       this.display.appendChild(timerContainer);
-      this.display.appendChild(finishButton);
-    }
+      if (this.params.show_finished_button) {
+        this.display.appendChild(finishButton);
+        this.display.querySelector("#trial-end").addEventListener("click", () => {
+          this.end_trial("button");
+        });
 
-    if (this.params.show_finished_button) {
-      this.display.appendChild(finishButton);
-      this.display.querySelector("#trial-end").addEventListener("click", () => {
-        this.end_trial("button");
-      });
-
-      if (this.params.min_trial_duration !== null) {
-        // Disable finish button initially if there is a minimum trial duration
-        finishButton.disabled = true;
+        if (this.params.min_trial_duration !== null) {
+          // Disable finish button initially if there is a minimum trial duration
+          finishButton.setAttribute("disabled", "true");
+        }
       }
+
     }
 
     // #endregion
@@ -310,6 +341,12 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
               timer_span.innerHTML = `0:00`;
             }
             clearInterval(this.timer_interval);
+
+            // Enable finish button if it was disabled
+            const finishButton = this.display.querySelector("#trial-end") as HTMLButtonElement;
+            if (finishButton !== null) {
+              finishButton.disabled = false;
+            }
             return;
           }
 

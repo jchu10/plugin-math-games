@@ -52,34 +52,35 @@
             "cover_story": "MoonMissionGame",//"HomeworkHelperGame",
             "controls": "tapToSelect",
             "hint_type": "powerup",
-            "feedback_type": "explosion"
+            "feedback_type": "explosion",
+            "max_trial_duration": 10000,
+            "show_finished_button": false, // game auto proceeds when trial duration is up
+            "show_countdown_trial_duration": true,
         }
 
         const stim2 = {
             "cover_story": "HomeworkHelperGame",//"HomeworkHelperGame",
             "controls": "arrowKeys",
             "hint_type": "stepByStep",
-            "feedback_type": "explanation"
+            "feedback_type": "explanation",
+            "min_trial_duration": 5000,
+            "show_finished_button": true,
+            "show_countdown_trial_duration": true,
         }
 
         const stim3 = {
             "cover_story": "MoonMissionGame",
             "controls": "arrowKeys",
             "hint_type": "stepByStep",
-            "feedback_type": "explanation",
-            "min_trial_duration": 5000,
-            "max_trial_duration": 10000,
-            "show_countdown_trial_duration": true,
-            "countdown_timer_html": `<span id="trial-timer"></span> tick tock`,
+            "feedback_type": "explanation"
         }
 
         const math_trials = {
             type: MathGamesPlugin,
-            timeline: [stim1, stim2],
+            timeline: [stim1, stim2, stim3],
             game_size: [560, 900],
             prompt: "<h3>Try this game!</h3>",
-            game_duration_limit: 30, // in seconds
-            trial_duration: 20 * 1000, // in milliseconds
+            game_duration_limit: 8, // in seconds
             display_in_game_timer: true,
             emit_data_callback: emitData
         }
