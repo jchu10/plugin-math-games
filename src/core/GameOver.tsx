@@ -10,7 +10,7 @@ export class GameOver extends Scene {
     }
 
     private handleResize() {
-        const gameAreaHeight = Math.floor(this.scale.height -10);
+        const gameAreaHeight = Math.floor(this.scale.height - 10);
         const gameAreaSize = Math.floor(gameAreaHeight * 1.5);
         const gameAreaX = (this.scale.width - gameAreaSize) / 2;
         const gameAreaY = (this.scale.height - gameAreaHeight) / 2;
@@ -34,11 +34,11 @@ export class GameOver extends Scene {
 
     preload() {
         console.log("preloading game over scene with classroom background");
-    this.load.setPath('assets');
-    this.load.image('game_bg_img', 'classroom.png');
+        this.load.setPath('assets');
+        this.load.image('game_bg_img', 'classroom.png');
     }
 
-    create(data: {gameConfig?: any} = {}) {
+    create(data: { gameConfig?: any } = {}) {
         this.cameras.main.setBackgroundColor('#ffffff');
         const gameAreaHeight = Math.floor(this.scale.height * 0.9);
         const gameAreaSize = Math.floor(gameAreaHeight * 1.5);

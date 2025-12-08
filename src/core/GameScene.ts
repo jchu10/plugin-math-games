@@ -244,7 +244,6 @@ export class GameScene extends Phaser.Scene {
         this.load.image('cube', 'cube.png');
         this.load.image('fullheart', 'fullheart.png');
         this.load.image('Sound', 'Sound.png');
-        this.load.image('logo', 'logo.png');
         this.load.image('powerup', 'powerup.png');
         this.load.image('powertool', 'powertool.png');
 

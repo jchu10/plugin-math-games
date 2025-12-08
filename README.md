@@ -28,6 +28,9 @@ To modify the stimuli or primitives, you will need to edit the relevant files in
    - output files are in `dist/` folder
 3. to publish to npm, `% npm publish --access public`
    - make sure to update version number in `package.json` first
+      - Patch (bug fixes): `% npm version patch`
+      - Minor (new features): `% npm version minor`
+      - Major (breaking changes): `% npm version major`
 
 ## Examples
 
