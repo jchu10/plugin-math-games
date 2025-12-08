@@ -13,8 +13,7 @@ export class GameScene extends Phaser.Scene {
     private appStartTS: number = 0;
 
     // Phaser objects ----
-    private data_site = "local"; // 'local' or 'server'
-    private logger = getLogger(this.data_site);
+    private logger!: ReturnType<typeof getLogger>;
     private gameStartTime: number = 0;
     private questionStartTime: number = 0;
     private questionsWithHints: string[] = [];
@@ -109,6 +108,9 @@ export class GameScene extends Phaser.Scene {
     // The 'init' method receives data passed from 'scene.start'
     public init(data: GameConfig) {
         this.gameConfig = data;
+        // Reset and initialize logger with callback from gameConfig
+        resetLogger();
+        this.logger = getLogger(this.gameConfig?.emitDataCallback);
     }
     // private restartGame() {
     //     console.log('Restarting game...');
@@ -1204,8 +1206,10 @@ export class GameScene extends Phaser.Scene {
         this.powertoolActive = false;
         this.powerupFromFeedback = false;
 
+        // Spawn answer objects and collect their data
+        let asteroidSpawnData: any[] = [];
         if (this.gameConfig.cover_story === 'MoonMissionGame') {
-            this.spawnAnswerObjects(
+            asteroidSpawnData = this.spawnAnswerObjects(
                 'asteroid',
                 (i, x) => this.gameAreaY + 85,
                 [0.18, 0.35],
@@ -1213,7 +1217,7 @@ export class GameScene extends Phaser.Scene {
                 150,
             );
         } else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
-            this.spawnAnswerObjects(
+            asteroidSpawnData = this.spawnAnswerObjects(
                 'thoughtbubble',
                 (i, x) => this.gameAreaY + this.gameAreaHeight - Math.floor(this.baseBottomBarHeight * (this.scale.height / 1080)),
                 [0.28, 0.45],
@@ -1221,6 +1225,18 @@ export class GameScene extends Phaser.Scene {
                 50,
             );
         }
+
+        // Log a single consolidated question_shown event with all asteroid spawn details
+        const questionId = `${this.currentQuestion.question}_${this.currentQuestion.correctAnswer}`;
+        this.updateGameState();
+        this.logger.logEvent('question_shown', {
+            questionId: questionId,
+            questionNumber: this.questionsShown,
+            questionText: this.currentQuestion.question,
+            correctAnswer: this.currentQuestion.correctAnswer,
+            responseOptions: this.currentQuestion.options,
+            asteroidSpawns: asteroidSpawnData
+        });
     }
 
     spawnAnswerObjects(
@@ -1229,7 +1245,7 @@ export class GameScene extends Phaser.Scene {
         scaleRange: [number, number],
         velocity: (i: number) => number,
         depth: number,
-    ) {
+    ): any[] {
         this.clearAnswerObjects()
 
         // Calculate spawn area
@@ -1287,6 +1303,9 @@ export class GameScene extends Phaser.Scene {
             this.answerObjects = this.physics.add.group();
         }
 
+        // Collect spawn data for consolidated logging
+        const spawnData: any[] = [];
+
         // Spawn answerObjects
         this.currentQuestion.options.forEach((answer, i) => {
             const x = finalPositions[i];
@@ -1310,9 +1329,8 @@ export class GameScene extends Phaser.Scene {
             obj.setData('answer', answer);
             obj.setDepth(depth);
 
-            // Log spawned
-            this.updateGameState();
-            this.logger.logEvent('asteroid_spawned', {
+            // Collect spawn data instead of logging individual events
+            spawnData.push({
                 answer,
                 position: { x, y },
                 size: scale,
@@ -1353,6 +1371,9 @@ export class GameScene extends Phaser.Scene {
                 });
             }
         });
+
+        // Return the collected spawn data
+        return spawnData;
     }
 
     shootLaser() {

@@ -88,6 +88,11 @@ const info = <const>{
       array: true,
       default: [600, 800],
     },
+    /** Optional callback function for real-time data emission to server (e.g., MongoDB via socket.io) */
+    emit_data_callback: {
+      type: ParameterType.FUNCTION,
+      default: undefined,
+    },
     /** If true, then the trial will end whenever the participant makes a response (assuming they make their response
  * before the cutoff specified by the `trial_duration` parameter). If false, then the trial will continue until
  * the value for `trial_duration` is reached. You can use this parameter to force the participant to view a
@@ -184,7 +189,8 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
         question_sequence_logic: this.params.question_sequence_logic,
         time_limit: this.params.game_duration_limit,
         difficulty: this.params.difficulty,
-        show_timer: this.params.display_in_game_timer, // Disable in-game timer text; use external timer if needed
+        show_timer: this.params.display_in_game_timer,
+        emitDataCallback: this.params.emit_data_callback,
       }
     };
 

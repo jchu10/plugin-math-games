@@ -1,5 +1,7 @@
-// src/game/utils/GameLogger.ts
-import { MathQuestion, Response, GameConfig, LogEvent, QuestionDifficulty } from './types';
+import { GameConfig } from './types';
+
+// Type definition for the emitData callback function
+export type EmitDataCallback = (data: any) => void;
 
 export interface GameState {
   gameConfig: GameConfig;
@@ -52,15 +54,13 @@ export interface GameState {
 export interface GameEvent {
   eventType: string;
   timestamp: string;
-  sessionId: string;
-  gameId: string;
+  roundId: string;
   gameState: GameState;
   eventData: Record<string, any>;
 }
 
 class GameLogger {
-  private sessionId: string;
-  private gameId: string;
+  private roundId: string;
   private events: GameEvent[] = [];
   private currentGameState: GameState | null = null;
   private periodicUpdateInterval: number | null = null;
@@ -68,16 +68,17 @@ class GameLogger {
   private readonly MAX_EVENTS_IN_MEMORY = 1000;
   private arrowKeyEventBuffer: any[] = [];
   private arrowKeyBufferTimeout: number | null = null;
+  private emitDataCallback?: EmitDataCallback;
 
-  constructor(gameId: string) {
-    this.gameId = gameId;
-    this.sessionId = this.generateSessionId();
+  constructor(emitDataCallback?: EmitDataCallback) {
+    this.emitDataCallback = emitDataCallback;
+    this.roundId = this.generateroundId();
   }
 
-  private generateSessionId(): string {
+  private generateroundId(): string {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 15);
-    return `session_${timestamp}_${random}`;
+    return `round_${timestamp}_${random}`;
   }
 
   /**
@@ -90,7 +91,8 @@ class GameLogger {
   /**
    * Log an event with the current game state
    */
-  logEvent(eventType: string, eventData: Record<string, any>): void {
+  logEvent(eventType: string,
+    eventData: Record<string, any>): void {
     if (!this.isEnabled || !this.currentGameState) {
       return;
     }
@@ -99,21 +101,37 @@ class GameLogger {
       const event: GameEvent = {
         eventType,
         timestamp: new Date().toISOString(),
-        sessionId: this.sessionId,
-        gameId: this.gameId,
+        roundId: this.roundId,
         gameState: { ...this.currentGameState },
         eventData: { ...eventData }
       };
 
       this.events.push(event);
 
-      // Flush if buffer gets too large
+      // Per-event emission: immediately emit this event if callback is provided
+      if (this.emitDataCallback) {
+        try {
+          // Flatten structure: promote eventType and timestamp to top-level, remove roundId duplication
+          this.emitDataCallback({
+            emissionType: 'per-event',
+            roundId: this.roundId,
+            eventType: event.eventType,
+            timestamp: event.timestamp,
+            gameState: event.gameState,
+            eventData: event.eventData
+          });
+        } catch (error) {
+          console.error('Error in emitDataCallback (per-event):', error);
+        }
+      }
+
+      // Flush to localStorage if buffer gets too large
       if (this.events.length > this.MAX_EVENTS_IN_MEMORY) {
         this.flushEvents();
         this.events = [];
       }
 
-      // Optionally flush to storage immediately for critical events
+      // Optionally flush to localStorage immediately for critical events
       if (this.isCriticalEvent(eventType)) {
         this.flushEvents();
       }
@@ -196,49 +214,54 @@ class GameLogger {
   /**
    * Get session ID
    */
-  getSessionId(): string {
-    return this.sessionId;
+  getroundId(): string {
+    return this.roundId;
   }
 
   /**
-   * Flush events to storage
+   * Emit round-level batch of events via callback
+   */
+  emitRoundBatch(): void {
+    if (this.emitDataCallback && this.events.length > 0) {
+      try {
+        // Remove roundId from individual events to avoid duplication
+        const eventsWithoutRoundId = this.events.map(event => ({
+          eventType: event.eventType,
+          timestamp: event.timestamp,
+          gameState: event.gameState,
+          eventData: event.eventData
+        }));
+
+        this.emitDataCallback({
+          emissionType: 'round-batch',
+          roundId: this.roundId,
+          timestamp: new Date().toISOString(),
+          events: eventsWithoutRoundId,
+          summary: {
+            totalEvents: this.events.length
+          }
+        });
+      } catch (error) {
+        console.error('Error in emitDataCallback (round-batch):', error);
+      }
+    }
+  }
+
+  /**
+   * Flush events to localStorage
    */
   flushEvents(): void {
     if (this.events.length === 0) return;
+    const storageKey = `game_log_${this.roundId}`;
 
-    // Store in localStorage (or send to server)
-    const storageKey = `game_log_${this.sessionId}`;
+    // Store in localStorage for backup/debugging
     try {
       const existingData = localStorage.getItem(storageKey);
       const existingEvents = existingData ? JSON.parse(existingData) : [];
       const allEvents = [...existingEvents, ...this.events];
       localStorage.setItem(storageKey, JSON.stringify(allEvents));
     } catch (e) {
-      console.error('Failed to store events:', e);
-    }
-
-    // Optionally send to server
-    // this.sendToServer(this.events);
-  }
-
-  /**
-   * Send events to server (implement based on your backend)
-   */
-  private async sendToServer(events: GameEvent[]): Promise<void> {
-    try {
-      await fetch('/api/game-events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId: this.sessionId,
-          gameId: this.gameId,
-          events: events
-        })
-      });
-    } catch (error) {
-      console.error('Failed to send events to server:', error);
+      console.error('Failed to store to localStorage:', e);
     }
   }
 
@@ -268,16 +291,18 @@ class GameLogger {
    */
   cleanup(): void {
     this.stopPeriodicUpdates();
-    this.flushEvents();
+    this.emitRoundBatch(); // Emit final batch before cleanup
+    this.flushEvents(); // Save to localStorage for backup
+    // localStorage.removeItem(`game_log_${this.roundId}`);
   }
 }
 
 // Singleton instance (or create per game instance)
 let loggerInstance: GameLogger | null = null;
 
-export function getLogger(gameId: string): GameLogger {
+export function getLogger(emitDataCallback?: EmitDataCallback): GameLogger {
   if (!loggerInstance) {
-    loggerInstance = new GameLogger(gameId);
+    loggerInstance = new GameLogger(emitDataCallback);
   }
   return loggerInstance;
 }

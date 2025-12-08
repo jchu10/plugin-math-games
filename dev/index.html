@@ -6,7 +6,7 @@
     <script src="https://unpkg.com/jspsych@8.2.2"></script>
     <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
-
+    <script src="https://unpkg.com/lodash@4.17.21"></script>
 </head>
 
 <body>
@@ -17,6 +17,21 @@
         import MathGamesPlugin from '../src/index.ts';
 
         const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
+
+        // Optional: Define emitData callback for real-time MongoDB transmission
+        // This enables three-level emission: per-event, round-level batching, and trial-level batching
+        // Example usage (requires socket.io connection):
+        function emitData(data) {
+            // Wrap game data with experiment-wide identifiers
+            const json = _.extend({},
+                { study_metadata: { project: 'math-games', experiment: 'math-games-rating-debug' } },
+                { session_info: { gameID: 'debugGameID' } },
+                data);
+
+            // Send to MongoDB via socket.io
+            console.log(json);
+            // socket.emit('currentData', json, 'math-games', 'math-games-rating-debug', 'debugGameID');
+        }
 
         const hello = {
             type: jsPsychHtmlButtonResponse,
@@ -55,7 +70,8 @@
             prompt: "<h3>Try this game!</h3>",
             game_duration_limit: 30, // in seconds
             trial_duration: 20 * 1000, // in milliseconds
-            display_in_game_timer: true
+            display_in_game_timer: true,
+            emit_data_callback: emitData
         }
 
         jsPsych.run([hello, math_trials, bye]);

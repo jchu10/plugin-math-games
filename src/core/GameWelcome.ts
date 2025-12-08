@@ -85,7 +85,7 @@ export class GameWelcome extends Scene {
             welcome_text_content += 'Use LEFT/RIGHT arrow keys to move the pencil.\nUse SPACE to toss the pencil at an idea cloud.';
 
             this.print_welcome_message(welcome_text_content);
-            this.print_start_button('Press SPACE to start');
+            this.print_start_button('Click here to start');
         }
 
         this.start_button.setInteractive({ useHandCursor: true });

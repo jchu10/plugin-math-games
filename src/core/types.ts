@@ -51,4 +51,5 @@ export interface GameConfig {
   difficulty: QuestionDifficulty; // initial math difficulty
   question_sequence_logic: questionSequence; // how to adjust difficulty
   show_timer?: boolean; // whether to display timer text
+  emitDataCallback?: (data: any) => void; // optional callback for real-time data emission to server
 }
