@@ -25,20 +25,10 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
     const [phaserReady, setPhaserReady] = useState(false);
 
     useEffect(() => {
-        // Only launch if the game isn't already running
-        if (gameRef.current) {
-            return () => { }; // Return empty cleanup function
-        }
-        // if (gameRef.current) {
-        //     return () => {
-        //         if (gameRef.current) {
-        //             gameRef.current.destroy(true);
-        //             gameRef.current = null;
-        //         }
-        //     };
-        // }
+        console.log('🎮 MathGamesApp useEffect - mounting, gameConfig:', gameConfig);
+
         // Launch Phaser game with Welcome scene first
-        gameRef.current = launchGame(PHASER_CONTAINER_ID, gameConfig); // Only pass 2 args
+        gameRef.current = launchGame(PHASER_CONTAINER_ID, gameConfig);
         setPhaserReady(true);
 
         // Listen for custom events from Phaser
@@ -78,14 +68,17 @@ export const MathGamesApp: React.FC<MathGamesAppProps> = ({ gameConfig, onGameEn
 
         // Cleanup
         return () => {
+            console.log('🎮 MathGamesApp cleanup - unmounting, destroying game');
             try {
                 // gameEvents.off('StartGame', onStartGame);
                 // gameEvents.off('GameOver', onGameOver);
                 // gameEvents.off('TryAgain', onTryAgain);
             } catch (e) { }
             if (gameRef.current) {
+                console.log('🎮 Destroying Phaser game instance');
                 gameRef.current.destroy(true);
                 gameRef.current = null;
+                console.log('🎮 Game destroyed successfully');
             }
         };
     }, [gameConfig]);

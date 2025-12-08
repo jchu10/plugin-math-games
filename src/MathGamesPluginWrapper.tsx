@@ -47,4 +47,14 @@ export function startMathGameTrial(
       }}
     />
   );
+
+  // Return a cleanup function that the plugin can call when the trial ends externally
+  return () => {
+    try {
+      root.unmount();
+    } catch (e) {
+      // Ignore errors if already unmounted
+      console.warn("React root already unmounted or failed to unmount", e);
+    }
+  };
 }

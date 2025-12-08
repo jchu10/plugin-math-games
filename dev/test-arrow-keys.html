@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Arrow Key Multi-Trial Test</title>
+    <script src="https://unpkg.com/jspsych@8.2.2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
+    <script src="https://unpkg.com/lodash@4.17.21"></script>
+</head>
+
+<body>
+
+    <div id="jspsych-target"></div>
+
+    <script type="module">
+        import MathGamesPlugin from '../src/index.ts';
+
+        const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
+
+        function emitData(data) {
+            console.log('Event emitted:', data);
+        }
+
+        const hello = {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: '<h2>Arrow Key Multi-Trial Test</h2><p>This test runs 4 trials: arrow, arrow, tap, arrow</p><p>Press Begin to start.</p>',
+            choices: ['Begin']
+        }
+
+        const bye = {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: '<h2>Test Complete!</h2><p>Check console for any errors.</p>',
+            choices: ['Finished']
+        }
+
+        // Trial 1: Arrow keys
+        const trial1 = {
+            cover_story: "MoonMissionGame",
+            controls: "arrowKeys",
+            hint_type: "none",
+            feedback_type: "none"
+        }
+
+        // Trial 2: Arrow keys
+        const trial2 = {
+            cover_story: "MoonMissionGame",
+            controls: "arrowKeys",
+            hint_type: "none",
+            feedback_type: "none"
+        }
+
+        // Trial 3: Tap to select
+        const trial3 = {
+            cover_story: "MoonMissionGame",
+            controls: "tapToSelect",
+            hint_type: "none",
+            feedback_type: "none"
+        }
+
+        // Trial 4: Arrow keys (this is where the bug occurs)
+        const trial4 = {
+            cover_story: "MoonMissionGame",
+            controls: "arrowKeys",
+            hint_type: "none",
+            feedback_type: "none"
+        }
+
+        const math_trials = {
+            type: MathGamesPlugin,
+            timeline: [trial1, trial2, trial3, trial4],
+            game_size: [560, 900],
+            prompt: "<h3>Trial {trial_index} of 4</h3>",
+            game_duration_limit: 15, // Short duration for quick testing
+            trial_duration: 10 * 1000, // 10 seconds per trial
+            display_in_game_timer: true,
+            emit_data_callback: emitData
+        }
+
+        jsPsych.run([hello, math_trials, bye]);
+
+    </script>
+
+</body>
+
+</html>

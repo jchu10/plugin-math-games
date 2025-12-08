@@ -172,6 +172,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
   private start_time;
   private timer_interval;
   private trial_finished_handler;
+  private cleanup_app: (() => void) | undefined;
 
   constructor(private jsPsych: JsPsych) { }
 
@@ -264,7 +265,8 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
 
     // #region Control flow ------
     // Launch the math game react app
-    startMathGameTrial(reactContainer, appParams, this.jsPsych, this.app_data);
+    // Store cleanup function
+    this.cleanup_app = startMathGameTrial(reactContainer, appParams, this.jsPsych, this.app_data);
 
     // start time
     this.start_time = performance.now();
@@ -321,6 +323,10 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
 
   private end_trial(response = null) {
     // this.jsPsych.pluginAPI.cancelAllKeyboardResponses();
+    if (this.cleanup_app) {
+      this.cleanup_app();
+      this.cleanup_app = undefined;
+    }
     clearInterval(this.timer_interval);
 
     const trial_data = <any>{};

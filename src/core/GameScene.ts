@@ -1102,17 +1102,55 @@ export class GameScene extends Phaser.Scene {
 
         // ---- Controls ----
         if (this.gameConfig.controls === 'arrowKeys') {
-            this.cursors = this.input.keyboard?.createCursorKeys() ?? {
-                up: { isDown: false },
-                down: { isDown: false },
-                left: { isDown: false },
-                right: { isDown: false },
-                space: { isDown: false },
-                shift: { isDown: false }
-            } as Phaser.Types.Input.Keyboard.CursorKeys;
+            console.log('🎮 Setting up arrow key controls...');
+            console.log('🎮 this.input:', this.input);
+            console.log('🎮 Keyboard plugin available:', !!this.input.keyboard);
+            console.log('🎮 Keyboard plugin enabled:', this.input.keyboard?.enabled);
+            console.log('🎮 Keyboard plugin manager:', this.input.keyboard?.manager);
+
+            // Ensure keyboard plugin is enabled and ready
+            if (!this.input.keyboard) {
+                console.error('❌ Keyboard plugin not available');
+                return;
+            }
+
+            // Explicitly enable the keyboard if it's disabled
+            if (!this.input.keyboard.enabled) {
+                console.log('🎮 Keyboard was disabled, enabling it...');
+                this.input.keyboard.enabled = true;
+            }
+
+            console.log('🎮 Clearing existing keys...');
+            // Clear existing key objects but DON'T remove global key captures
+            // removeAllKeys(true) would remove browser-level key captures which are GLOBAL
+            // and would prevent keyboard input in subsequent game instances
+            this.input.keyboard.removeAllKeys(false);
+
+            console.log('🎮 Creating cursor keys...');
+            // Don't use createCursorKeys() - it may not work properly across game instances
+            // Instead, manually create each key using addKey()
+            this.cursors = {
+                up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
+                down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
+                left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
+                right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
+                space: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
+                shift: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT)
+            };
+            console.log('🎮 Cursor keys created:', this.cursors);
+            console.log('🎮 LEFT key:', this.cursors.left);
+            console.log('🎮 RIGHT key:', this.cursors.right);
+
+            // Explicitly add key captures for arrow keys
+            // This ensures browser keyboard events are captured by Phaser
+            console.log('🎮 Adding key captures...');
+            this.input.keyboard.addCapture('LEFT,RIGHT,SPACE');
+            console.log('🎮 Key captures added');
+
+            console.log('🎮 Registering keyboard event listeners...');
 
             // Event-based key logging for arrow keys
-            this.input.keyboard?.on('keydown-LEFT', () => {
+            this.input.keyboard.on('keydown-LEFT', () => {
                 if (this.sandboxActive || this.feedbackActive) return;
                 if (!this.keyDownTimes.has('left')) {
                     this.keyDownTimes.set('left', Date.now());
@@ -1124,7 +1162,7 @@ export class GameScene extends Phaser.Scene {
                 }
             });
 
-            this.input.keyboard?.on('keyup-LEFT', () => {
+            this.input.keyboard.on('keyup-LEFT', () => {
                 const downTime = this.keyDownTimes.get('left');
                 if (downTime !== undefined) {
                     const duration = Date.now() - downTime;
@@ -1137,7 +1175,7 @@ export class GameScene extends Phaser.Scene {
                 }
             });
 
-            this.input.keyboard?.on('keydown-RIGHT', () => {
+            this.input.keyboard.on('keydown-RIGHT', () => {
                 if (this.sandboxActive || this.feedbackActive) return;
                 if (!this.keyDownTimes.has('right')) {
                     this.keyDownTimes.set('right', Date.now());
@@ -1149,7 +1187,7 @@ export class GameScene extends Phaser.Scene {
                 }
             });
 
-            this.input.keyboard?.on('keyup-RIGHT', () => {
+            this.input.keyboard.on('keyup-RIGHT', () => {
                 const downTime = this.keyDownTimes.get('right');
                 if (downTime !== undefined) {
                     const duration = Date.now() - downTime;
@@ -1163,7 +1201,7 @@ export class GameScene extends Phaser.Scene {
             });
 
             // Space key logging (for laser shooting)
-            this.input.keyboard?.on('keydown-SPACE', () => {
+            this.input.keyboard.on('keydown-SPACE', () => {
                 if (this.sandboxActive || this.feedbackActive) return;
                 if (!this.keyDownTimes.has('space')) {
                     this.keyDownTimes.set('space', Date.now());
@@ -1176,7 +1214,7 @@ export class GameScene extends Phaser.Scene {
                 this.shootLaser();
             });
 
-            this.input.keyboard?.on('keyup-SPACE', () => {
+            this.input.keyboard.on('keyup-SPACE', () => {
                 const downTime = this.keyDownTimes.get('space');
                 if (downTime !== undefined) {
                     const duration = Date.now() - downTime;
@@ -1999,6 +2037,10 @@ export class GameScene extends Phaser.Scene {
             this.input.keyboard.off('keyup-RIGHT');
             this.input.keyboard.off('keydown-SPACE');
             this.input.keyboard.off('keyup-SPACE');
+
+            // Remove all key objects but DON'T remove global key captures
+            // removeAllKeys(true) would remove browser-level key captures which are GLOBAL
+            this.input.keyboard.removeAllKeys(false);
         }
 
         if (this.logger) {

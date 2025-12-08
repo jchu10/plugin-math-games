@@ -24,6 +24,12 @@ export const launchGame = (containerId: string, config: GameConfig): Phaser.Game
                 debug: false
             }
         },
+        input: {
+            keyboard: true,
+            mouse: true,
+            touch: false,
+            gamepad: false
+        },
         scene: [GameWelcome, GameScene, GameOver], // Tell Phaser which scenes to use
     };
 

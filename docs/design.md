@@ -29,6 +29,11 @@ A jsPsych plugin that integrates a Phaser-based math game through a React wrappe
 - Passes `GameConfig` to React app
 - Handles `onGameEnd` callback to accumulate round data
 - Unmounts React app when round completes
+- **Cleanup Lifecycle:**
+  - Returns a cleanup function from `startMathGameTrial`
+  - Allows jsPsych to explicitly unmount React root
+  - Ensures `MathGamesApp` destruction (and thus Phaser game destruction) when trial ends
+
 
 **`MathGamesApp.tsx`** - React component managing Phaser instance
 - Creates Phaser game container (`phaser-game-container`)

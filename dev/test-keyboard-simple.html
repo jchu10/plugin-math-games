@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Simple Keyboard Test</title>
+</head>
+
+<body>
+    <h1>Simple Keyboard Test</h1>
+    <p>Press any key and it should appear below:</p>
+    <div id="output" style="border: 1px solid black; padding: 20px; min-height: 100px;"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        let count = 0;
+
+        document.addEventListener('keydown', (e) => {
+            count++;
+            output.innerHTML += `<div>${count}. Key pressed: ${e.key} (code: ${e.code})</div>`;
+            console.log('Keydown event:', e);
+        });
+
+        console.log('Keyboard test ready');
+    </script>
+</body>
+
+</html>
