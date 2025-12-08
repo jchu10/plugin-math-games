@@ -6,7 +6,7 @@ This plugin displays math games. The games can be displayed until a button respo
 
 ## Installation
 
-1. `% cd` to root directory of plugin (`jspsych-tangram-prep`)
+1. `% cd` to root directory of plugin (`plugin-math-games`)
 2. install packages `% npm i`
 3. to run local preview, `% npm run dev`
    - this procedure is powered by Vite, which has its own config file (`vite.config.ts`)

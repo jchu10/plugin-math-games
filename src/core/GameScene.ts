@@ -101,6 +101,9 @@ export class GameScene extends Phaser.Scene {
     private optionLabelColor: string = "#000000";
     private optionLabelStroke: string = "#ffffff";
 
+    // Key press tracking for event-based logging
+    private keyDownTimes: Map<string, number> = new Map();
+
     constructor() {
         super('GameScene');
     }
@@ -422,18 +425,6 @@ export class GameScene extends Phaser.Scene {
 
             this.spaceship.x += this.shipVel * dt;
             this.spaceship.x = Phaser.Math.Clamp(this.spaceship.x, this.gameAreaX + 40, this.gameAreaX + this.gameAreaSize - 40);
-
-            // Log arrow key press (buffered)
-            if (keyPressed) {
-                this.updateGameState();
-                this.logger.logArrowKey(keyPressed, {
-                    x: this.spaceship.x,
-                    y: this.spaceship.y
-                }, {
-                    x: this.shipVel,
-                    y: 0
-                });
-            }
 
             // Laser movement
             const whiteBarBottom = this.gameAreaY + 85;
@@ -1087,7 +1078,82 @@ export class GameScene extends Phaser.Scene {
                 space: { isDown: false },
                 shift: { isDown: false }
             } as Phaser.Types.Input.Keyboard.CursorKeys;
-            this.input.keyboard?.on('keydown-SPACE', () => { this.shootLaser(); });
+
+            // Event-based key logging for arrow keys
+            this.input.keyboard?.on('keydown-LEFT', () => {
+                if (!this.keyDownTimes.has('left')) {
+                    this.keyDownTimes.set('left', Date.now());
+                    this.updateGameState();
+                    this.logger.logKeyDown('left',
+                        { x: this.spaceship.x, y: this.spaceship.y },
+                        { x: this.shipVel, y: 0 }
+                    );
+                }
+            });
+
+            this.input.keyboard?.on('keyup-LEFT', () => {
+                const downTime = this.keyDownTimes.get('left');
+                if (downTime !== undefined) {
+                    const duration = Date.now() - downTime;
+                    this.keyDownTimes.delete('left');
+                    this.updateGameState();
+                    this.logger.logKeyUp('left', duration,
+                        { x: this.spaceship.x, y: this.spaceship.y },
+                        { x: this.shipVel, y: 0 }
+                    );
+                }
+            });
+
+            this.input.keyboard?.on('keydown-RIGHT', () => {
+                if (!this.keyDownTimes.has('right')) {
+                    this.keyDownTimes.set('right', Date.now());
+                    this.updateGameState();
+                    this.logger.logKeyDown('right',
+                        { x: this.spaceship.x, y: this.spaceship.y },
+                        { x: this.shipVel, y: 0 }
+                    );
+                }
+            });
+
+            this.input.keyboard?.on('keyup-RIGHT', () => {
+                const downTime = this.keyDownTimes.get('right');
+                if (downTime !== undefined) {
+                    const duration = Date.now() - downTime;
+                    this.keyDownTimes.delete('right');
+                    this.updateGameState();
+                    this.logger.logKeyUp('right', duration,
+                        { x: this.spaceship.x, y: this.spaceship.y },
+                        { x: this.shipVel, y: 0 }
+                    );
+                }
+            });
+
+            // Space key logging (for laser shooting)
+            this.input.keyboard?.on('keydown-SPACE', () => {
+                if (!this.keyDownTimes.has('space')) {
+                    this.keyDownTimes.set('space', Date.now());
+                    this.updateGameState();
+                    this.logger.logKeyDown('space',
+                        { x: this.spaceship.x, y: this.spaceship.y },
+                        { x: this.shipVel, y: 0 }
+                    );
+                }
+                this.shootLaser();
+            });
+
+            this.input.keyboard?.on('keyup-SPACE', () => {
+                const downTime = this.keyDownTimes.get('space');
+                if (downTime !== undefined) {
+                    const duration = Date.now() - downTime;
+                    this.keyDownTimes.delete('space');
+                    this.updateGameState();
+                    this.logger.logKeyUp('space', duration,
+                        { x: this.spaceship.x, y: this.spaceship.y },
+                        { x: this.shipVel, y: 0 }
+                    );
+                }
+            });
+
             this.laserGroup = this.physics.add.group();
         }
 

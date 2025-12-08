@@ -66,8 +66,6 @@ class GameLogger {
   private periodicUpdateInterval: number | null = null;
   private isEnabled: boolean = true;
   private readonly MAX_EVENTS_IN_MEMORY = 1000;
-  private arrowKeyEventBuffer: any[] = [];
-  private arrowKeyBufferTimeout: number | null = null;
   private emitDataCallback?: EmitDataCallback;
 
   constructor(emitDataCallback?: EmitDataCallback) {
@@ -154,23 +152,34 @@ class GameLogger {
   }
 
   /**
-   * Log arrow key event with buffering to reduce frequency
+   * Log key down event
    */
-  logArrowKey(key: string, position: any, velocity: any): void {
-    this.arrowKeyEventBuffer.push({ key, position, velocity });
-
-    if (this.arrowKeyBufferTimeout) {
-      clearTimeout(this.arrowKeyBufferTimeout);
+  logKeyDown(key: string, position: any, velocity: any): void {
+    if (!this.isEnabled || !this.currentGameState) {
+      return;
     }
 
-    // Only log every 100ms for arrow keys
-    this.arrowKeyBufferTimeout = window.setTimeout(() => {
-      if (this.arrowKeyEventBuffer.length > 0) {
-        const lastEvent = this.arrowKeyEventBuffer[this.arrowKeyEventBuffer.length - 1];
-        this.logEvent('arrow_key_pressed', lastEvent);
-        this.arrowKeyEventBuffer = [];
-      }
-    }, 100);
+    this.logEvent('key_down', {
+      key,
+      position,
+      velocity
+    });
+  }
+
+  /**
+   * Log key up event with duration
+   */
+  logKeyUp(key: string, duration: number, position: any, velocity: any): void {
+    if (!this.isEnabled || !this.currentGameState) {
+      return;
+    }
+
+    this.logEvent('key_up', {
+      key,
+      duration,
+      position,
+      velocity
+    });
   }
 
   /**
@@ -198,10 +207,6 @@ class GameLogger {
       clearInterval(this.periodicUpdateInterval);
       this.periodicUpdateInterval = null;
     }
-    if (this.arrowKeyBufferTimeout) {
-      clearTimeout(this.arrowKeyBufferTimeout);
-      this.arrowKeyBufferTimeout = null;
-    }
   }
 
   /**
@@ -212,8 +217,8 @@ class GameLogger {
   }
 
   /**
-   * Get session ID
-   */
+   * Get ID for current game round (multiple r)
+s per trial   */
   getroundId(): string {
     return this.roundId;
   }
