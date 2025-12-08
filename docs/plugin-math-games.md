@@ -23,8 +23,8 @@ In addition to the [parameters available in all plugins](https://www.jspsych.org
 | game_size | INT (array) | `[600, 800]` | Array that defines the size of the canvas element in pixels. First value is height, second value is width. |
 | emit_data_callback | FUNCTION | `undefined` | Optional callback function for real-time data emission to server (e.g., MongoDB via socket.io). Receives event data with `emissionType`, `roundId`, `eventType`, `timestamp`, `gameState`, and `eventData`. |
 | response_ends_trial | BOOL | `true` | If true, then the trial will end whenever the participant makes a response (assuming they make their response before the cutoff specified by the `trial_duration` parameter). If false, then the trial will continue until the value for `trial_duration` is reached. |
-| trial_duration | INT | `null` | How long to wait for the participant to make a response before ending the trial in milliseconds. If the participant fails to make a response before this timer is reached, the participant's response will be recorded as null for the trial and the trial will end. If the value of this parameter is null, the trial will wait for a response indefinitely. |
-| trial_duration_limit_type | STRING | `"minimum"` | If trial duration is a minimum response time, then trial ends when participant clicks finish button. Otherwise if trial duration is maximum response time, then trial ends when time limit is reached. Options: `"minimum"`, `"maximum"`. |
+| min_trial_duration | INT | `null` | Minimum time the trial must run before the participant can advance. If set, the "Done Playing" button will be disabled until this time has passed. |
+| max_trial_duration | INT | `null` | Maximum time the trial can run before automatically ending. If set, the trial will end automatically when this time is reached. |
 | show_countdown_trial_duration | BOOL | `true` | Whether to show a timer that counts down until the end of the trial when `trial_duration` is not `null`. |
 | countdown_timer_html | HTML_STRING | `<span id="trial-timer"></span> remaining` | The HTML to use for rendering the countdown timer. The element with `id="trial-timer"` will have its content replaced by a countdown timer in the format `MM:SS`. |
 
@@ -160,8 +160,8 @@ var trial = {
   game_size: [600, 800],
   
   // Trial timing
-  trial_duration: 300000, // 5 minutes in milliseconds
-  trial_duration_limit_type: 'maximum',
+  min_trial_duration: 30000, // in milliseconds
+  max_trial_duration: 60000,  // in milliseconds
   show_countdown_trial_duration: true,
   response_ends_trial: true
 }

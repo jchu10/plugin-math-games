@@ -23,6 +23,7 @@ describe("my plugin", () => {
         controls: "arrowKeys",
         hint_type: "none",
         feedback_type: "none",
+        emit_data_callback: () => { },
       },
     ]);
 

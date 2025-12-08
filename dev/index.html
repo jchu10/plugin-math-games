@@ -62,6 +62,17 @@
             "feedback_type": "explanation"
         }
 
+        const stim3 = {
+            "cover_story": "MoonMissionGame",
+            "controls": "arrowKeys",
+            "hint_type": "stepByStep",
+            "feedback_type": "explanation",
+            "min_trial_duration": 5000,
+            "max_trial_duration": 10000,
+            "show_countdown_trial_duration": true,
+            "countdown_timer_html": `<span id="trial-timer"></span> tick tock`,
+        }
+
         const math_trials = {
             type: MathGamesPlugin,
             timeline: [stim1, stim2],

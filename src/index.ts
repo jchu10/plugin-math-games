@@ -102,21 +102,21 @@ const info = <const>{
       type: ParameterType.BOOL,
       default: true,
     },
-    /** How long to wait for the participant to make a response before ending the trial in milliseconds.
-         * If the participant fails to make a response before this timer is reached, the participant's response
-         * will be recorded as null for the trial and the trial will end. If the value of this parameter is null,
-         * the trial will wait for a response indefinitely.
-         */
-    trial_duration: {
+    /**
+     * Minimum time the trial must run before the participant can advance.
+     * If set, the "Done Playing" button will be disabled until this time has passed.
+     */
+    min_trial_duration: {
       type: ParameterType.INT,
       default: null,
     },
-    /** If trial duration is a minimum response time, then trial ends when participant clicks finish button. 
-     * Otherwise if trial duration is maximum response time, then trial ends when time limit is reached.
-     * */
-    trial_duration_limit_type: {
-      type: ParameterType.STRING,
-      default: "minimum",
+    /**
+     * Maximum time the trial can run before automatically ending.
+     * If set, the trial will end automatically when this time is reached.
+     */
+    max_trial_duration: {
+      type: ParameterType.INT,
+      default: null,
     },
     /**
      * Whether to show a timer that counts down until the end of the trial when `trial_duration` is not `null`.
@@ -208,7 +208,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
     timerContainer.id = "timerDiv";
 
     let timer_html = "";
-    if (this.params.show_countdown_trial_duration && this.params.trial_duration) {
+    if (this.params.show_countdown_trial_duration && (this.params.max_trial_duration || this.params.min_trial_duration)) {
       timer_html = `<p id="countdown-timer">${this.params.countdown_timer_html}</p>`;
     }
     timerContainer.innerHTML = timer_html;
@@ -255,7 +255,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
         this.end_trial("button");
       });
 
-      if (this.params.trial_duration !== null && this.params.trial_duration_limit_type === "minimum") {
+      if (this.params.min_trial_duration !== null) {
         // Disable finish button initially if there is a minimum trial duration
         finishButton.disabled = true;
       }
@@ -279,25 +279,40 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
   }
 
   private set_trial_duration_timer() {
-    if (this.params.trial_duration !== null) {
-      if (this.params.trial_duration_limit_type === "minimum") {
-        // Enable finish button after minimum time has passed
-        this.jsPsych.pluginAPI.setTimeout(() => {
-          const finishButton = this.display.querySelector("#trial-end") as HTMLButtonElement;
-          if (finishButton !== null) {
-            finishButton.disabled = false;
-          }
-        }, this.params.trial_duration);
-      } else if (this.params.trial_duration_limit_type === "maximum") {
-        // End trial after maximum time has passed
-        this.jsPsych.pluginAPI.setTimeout(() => {
-          this.end_trial();
-        }, this.params.trial_duration);
-      }
-      // Set up countdown timer display
-      if (this.params.show_countdown_trial_duration) {
+    // Handle Minimum Duration
+    if (this.params.min_trial_duration !== null) {
+      this.jsPsych.pluginAPI.setTimeout(() => {
+        const finishButton = this.display.querySelector("#trial-end") as HTMLButtonElement;
+        if (finishButton !== null) {
+          finishButton.disabled = false;
+        }
+      }, this.params.min_trial_duration);
+    }
+
+    // Handle Maximum Duration
+    if (this.params.max_trial_duration !== null) {
+      this.jsPsych.pluginAPI.setTimeout(() => {
+        this.end_trial();
+      }, this.params.max_trial_duration);
+    }
+
+    // Set up countdown timer display
+    if (this.params.show_countdown_trial_duration) {
+      const durationForTimer = this.params.max_trial_duration || this.params.min_trial_duration;
+      if (durationForTimer !== null) {
         this.timer_interval = setInterval(() => {
-          const remaining = this.params.trial_duration - (performance.now() - this.start_time);
+          const remaining = durationForTimer - (performance.now() - this.start_time);
+
+          // Clear if time is up
+          if (remaining <= 0) {
+            const timer_span = this.display.querySelector("#trial-timer");
+            if (timer_span) {
+              timer_span.innerHTML = `0:00`;
+            }
+            clearInterval(this.timer_interval);
+            return;
+          }
+
           let minutes = Math.floor(remaining / 1000 / 60);
           let seconds = Math.ceil((remaining - minutes * 1000 * 60) / 1000);
           if (seconds == 60) {
@@ -309,12 +324,6 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
           const timer_span = this.display.querySelector("#trial-timer");
           if (timer_span) {
             timer_span.innerHTML = `${minutes_str}:${seconds_str}`;
-          }
-          if (remaining <= 0) {
-            if (timer_span) {
-              timer_span.innerHTML = `0:00`;
-            }
-            clearInterval(this.timer_interval);
           }
         }, 250);
       }

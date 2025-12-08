@@ -1102,11 +1102,11 @@ export class GameScene extends Phaser.Scene {
 
         // ---- Controls ----
         if (this.gameConfig.controls === 'arrowKeys') {
-            console.log('🎮 Setting up arrow key controls...');
-            console.log('🎮 this.input:', this.input);
-            console.log('🎮 Keyboard plugin available:', !!this.input.keyboard);
-            console.log('🎮 Keyboard plugin enabled:', this.input.keyboard?.enabled);
-            console.log('🎮 Keyboard plugin manager:', this.input.keyboard?.manager);
+            // console.log('🎮 Setting up arrow key controls...');
+            // console.log('🎮 this.input:', this.input);
+            // console.log('🎮 Keyboard plugin available:', !!this.input.keyboard);
+            // console.log('🎮 Keyboard plugin enabled:', this.input.keyboard?.enabled);
+            // console.log('🎮 Keyboard plugin manager:', this.input.keyboard?.manager);
 
             // Ensure keyboard plugin is enabled and ready
             if (!this.input.keyboard) {
@@ -1116,17 +1116,17 @@ export class GameScene extends Phaser.Scene {
 
             // Explicitly enable the keyboard if it's disabled
             if (!this.input.keyboard.enabled) {
-                console.log('🎮 Keyboard was disabled, enabling it...');
+                // console.log('🎮 Keyboard was disabled, enabling it...');
                 this.input.keyboard.enabled = true;
             }
 
-            console.log('🎮 Clearing existing keys...');
+            // console.log('🎮 Clearing existing keys...');
             // Clear existing key objects but DON'T remove global key captures
             // removeAllKeys(true) would remove browser-level key captures which are GLOBAL
             // and would prevent keyboard input in subsequent game instances
             this.input.keyboard.removeAllKeys(false);
 
-            console.log('🎮 Creating cursor keys...');
+            // console.log('🎮 Creating cursor keys...');
             // Don't use createCursorKeys() - it may not work properly across game instances
             // Instead, manually create each key using addKey()
             this.cursors = {
@@ -1137,17 +1137,17 @@ export class GameScene extends Phaser.Scene {
                 space: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
                 shift: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT)
             };
-            console.log('🎮 Cursor keys created:', this.cursors);
-            console.log('🎮 LEFT key:', this.cursors.left);
-            console.log('🎮 RIGHT key:', this.cursors.right);
+            // console.log('🎮 Cursor keys created:', this.cursors);
+            // console.log('🎮 LEFT key:', this.cursors.left);
+            // console.log('🎮 RIGHT key:', this.cursors.right);
 
             // Explicitly add key captures for arrow keys
             // This ensures browser keyboard events are captured by Phaser
-            console.log('🎮 Adding key captures...');
+            // console.log('🎮 Adding key captures...');
             this.input.keyboard.addCapture('LEFT,RIGHT,SPACE');
-            console.log('🎮 Key captures added');
+            // console.log('🎮 Key captures added');
 
-            console.log('🎮 Registering keyboard event listeners...');
+            // console.log('🎮 Registering keyboard event listeners...');
 
             // Event-based key logging for arrow keys
             this.input.keyboard.on('keydown-LEFT', () => {
@@ -1683,8 +1683,8 @@ export class GameScene extends Phaser.Scene {
 
     // Number line popup for step-by-step helper (games 5-8) - "Counting On" method
     private openNumberLinePopup() {
-        console.log('=== OPENING NUMBER LINE POPUP ===');
-        console.log('Current question:', this.currentQuestion);
+        // console.log('=== OPENING NUMBER LINE POPUP ===');
+        // console.log('Current question:', this.currentQuestion);
 
         this.sandboxActive = true;
         this.powertoolActive = true;
@@ -1872,7 +1872,7 @@ export class GameScene extends Phaser.Scene {
         };
 
         if (subtractionMatch) {
-            console.log('=== ENTERING SUBTRACTION ANIMATION ===');
+            // console.log('=== ENTERING SUBTRACTION ANIMATION ===');
             // For subtraction, break into tens and units like addition
             const tensToSubtract = Math.floor(secondAddend / 10);
             const unitsToSubtract = secondAddend % 10;
@@ -1891,7 +1891,7 @@ export class GameScene extends Phaser.Scene {
                     if (this.sandboxPopup) {
                         drawJump(jumpStart, -10, 0x2d89ff, '-' + (10 + (i * 10)));
                     } else {
-                        console.log('ERROR: sandboxPopup is undefined during animation!');
+                        console.error('ERROR: sandboxPopup is undefined during animation!');
                     }
                 });
                 currentPos -= 10;
@@ -1907,7 +1907,7 @@ export class GameScene extends Phaser.Scene {
                     if (this.sandboxPopup) {
                         drawJump(jumpStart, -1, 0xff4444, '-' + (1 + i));
                     } else {
-                        console.log('ERROR: sandboxPopup is undefined during animation!');
+                        console.error('ERROR: sandboxPopup is undefined during animation!');
                     }
                 });
                 animationDelay += 600; // 600ms delay between each unit count
@@ -1935,9 +1935,9 @@ export class GameScene extends Phaser.Scene {
             // Draw 10-count jumps (blue) first - animate each one
             for (let i = 0; i < tensCount; i++) {
                 const jumpStart = firstAddend + (i * 10);
-                console.log(`Scheduling 10-count jump ${i + 1}: from ${jumpStart} to ${jumpStart + 10} at delay ${animationDelay}ms`);
+                // console.log(`Scheduling 10-count jump ${i + 1}: from ${jumpStart} to ${jumpStart + 10} at delay ${animationDelay}ms`);
                 this.time.delayedCall(animationDelay, () => {
-                    console.log(`Executing 10-count jump: from ${jumpStart} to ${jumpStart + 10}`);
+                    // console.log(`Executing 10-count jump: from ${jumpStart} to ${jumpStart + 10}`);
                     if (this.sandboxPopup) {
                         drawJump(jumpStart, 10, 0x2d89ff, '+' + (10 + (i * 10)));
                     } else {
@@ -2027,7 +2027,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     shutdown() {
-        console.log('🔴 GameScene.shutdown() called - cleaning up keyboard listeners');
+        // console.log('🔴 GameScene.shutdown() called - cleaning up keyboard listeners');
 
         // Explicitly remove keyboard listeners by event name
         if (this.input.keyboard) {
