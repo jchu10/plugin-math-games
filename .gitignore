@@ -6,3 +6,4 @@ examples/assets/**
 src/assets/**
 examples/data/**
 **/todo.md
+.npmrc
