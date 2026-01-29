@@ -1,6 +1,6 @@
 {
   "name": "plugin-math-games",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "This plugin displays math games. The games can be displayed until a button response is given, or for a fixed length of time.",
   "type": "module",
   "main": "dist/index.cjs",
