@@ -28,13 +28,26 @@ export function startMathGameTrial(
 ) {
   const { gameConfig } = params;
 
+  // Intercept the emitDataCallback to track round data in app_data
+  const originalEmitDataCallback = gameConfig.emitDataCallback;
+  gameConfig.emitDataCallback = (data: any) => {
+    // Capture round-level batches to track roundIDs and round summary info
+    if (data.emissionType === "round-batch") {
+      app_data.push({ roundId: data.roundId, summary: data.summary });
+    }
+    // Forward to original callback if it exists (e.g. from jsPsych parameters)
+    if (originalEmitDataCallback) {
+      originalEmitDataCallback(data);
+    }
+  };
+
   /**
-   * Called when the React app signals completion.
-   * Finishes the jsPsych trial, returning the action log.
+   * Called when the React app signals completion of the entire trial.
    */
   const onGameEnd = (data: { events: any[] }) => {
-    console.log("One round of math game ended with data:", data); // debug log
-    app_data.push(data);
+    console.log("Math game trial ended.");
+    // If the last round hasn't been pushed via emitDataCallback, we could push it here
+    // but usually cleanup() covers it.
   };
 
   const root = createRoot(display_element);

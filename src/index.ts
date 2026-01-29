@@ -144,10 +144,11 @@ const info = <const>{
       type: ParameterType.STRING,
     },
     /**
-     * The full action log (questions, responses, hints, feedback, end, start) with timestamps and descriptions.
+     * List of Round IDs played.
      */
-    events: {
+    rounds_played: {
       type: ParameterType.COMPLEX,
+      default: [],
     },
   },
   // When you run build on your plugin, citations will be generated here based on the information in the CITATION.cff file.
@@ -379,7 +380,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
 
     trial_data.rt = Math.round(performance.now() - this.start_time);
     trial_data.response = response;
-    trial_data.events = this.app_data;
+    trial_data.rounds_played = this.app_data;
 
     this.jsPsych.finishTrial(trial_data);
 

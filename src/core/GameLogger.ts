@@ -243,9 +243,14 @@ s per trial   */
           timestamp: new Date().toISOString(),
           events: eventsWithoutRoundId,
           summary: {
-            totalEvents: this.events.length,
-            totalQuestionsShown: this.events.filter(event => event.eventType === 'question_shown').length,
-            totalAnswersSubmitted: this.events.filter(event => event.eventType === 'answerObject_tapped' || event.eventType === 'laser_hit').length,
+            numEvents: this.events.length,
+            totalQuestionsShown: this.currentGameState.progress.questionsShown,
+            totalQuestionsAnswered: this.currentGameState.progress.questionsAnswered,
+            totalQuestionsCorrect: this.currentGameState.progress.correctCount,
+            totalQuestionsIncorrect: this.currentGameState.progress.incorrectCount,
+            livesRemaining: this.currentGameState.status.lives,
+            timeElapsed: this.currentGameState.status.timeElapsed,
+            hintsUsed: this.currentGameState.hints.totalHintsUsed,
           }
         });
       } catch (error) {

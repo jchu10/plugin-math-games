@@ -110,7 +110,15 @@ If an `emit_data_callback` function is provided, the plugin will emit data in re
   timestamp: string,
   events: Array<Event>,
   summary: {
-    totalEvents: number
+    numEvents: number,
+    totalQuestionsShown: number,
+    totalQuestionsAnswered: number,
+    totalQuestionsCorrect: number,
+    totalQuestionsIncorrect: number,
+    livesRemaining: number,
+    timeElapsed: number,
+    hintsUsed: number,
+
   }
 }
 ```
