@@ -1,40 +1,77 @@
 # plugin-math-games
 
-## Overview
+A jsPsych plugin that embeds Phaser-based math games into psychological experiments. Players answer math questions in themed game environments (space/classroom) with adaptive difficulty.
 
-This plugin displays math games. The games can be displayed until a button response is given, or for a fixed length of time.
+## Prerequisites
 
-## Installation
+- **Node.js**: v24.0.0 or later
+- **npm**: v9.0.0 or later
 
-1. `% cd` to root directory of plugin (`plugin-math-games`)
-2. install packages `% npm i`
-3. to run local preview, `% npm run dev`
-   - this procedure is powered by Vite, which has its own config file (`vite.config.ts`)
-   - currently, stimuli and primitives are hard-coded.
-4. To use in an existing jspsych experiment, you can either
-   - install package from npm registry `% npm install plugin-math-games --save`
-   - or `<script src="https://unpkg.com/plugin-math-games@VERSION"></script>` where version is 0.0.3 or later
-   - or copy and import the built js files from `dist/` folder after building for production. Do so by including the script tags in your HTML file:
-     `<script type="text/javascript" src="path/to/plugin-math-games/dist/index.browser.js"></script>`
+## Quick Start (Contributors)
 
-## Development
+```bash
+# Clone the repository
+git clone https://github.com/jchu10/plugin-math-games.git
+cd plugin-math-games
 
-To modify the stimuli or primitives, you will need to edit the relevant files in the `src/` directory.
+# Install dependencies
+npm install
 
-1. to run tests, `% npm run test`
-   - this procedure is powered by Jest, which has its own config file (`vitest.config.ts`)
-2. to build for production, `% npm run build`
-   - this procedure is powered by Rollup, which has its own config file (`rollup.config.js`)
-   - output files are in `dist/` folder
-3. to publish to npm, `% npm publish --access public`
-   - make sure to update version number in `package.json` first
-      - Patch (bug fixes): `% npm version patch`
-      - Minor (new features): `% npm version minor`
-      - Major (breaking changes): `% npm version major`
+# Start development server
+npm run dev
+
+# Run tests
+npm run test
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contributor guidelines.
+
+## Installation (Users)
+
+Install from npm:
+```bash
+npm install plugin-math-games --save
+```
+
+Or include via CDN:
+```html
+<script src="https://unpkg.com/plugin-math-games@VERSION"></script>
+```
+
+Or copy the built files from `dist/` after building:
+```html
+<script type="text/javascript" src="path/to/plugin-math-games/dist/index.browser.js"></script>
+```
+
+## Development Commands
+
+| Command              | Description                              |
+| -------------------- | ---------------------------------------- |
+| `npm run dev`        | Start Vite dev server for local preview  |
+| `npm run build`      | Production build via Rollup              |
+| `npm run test`       | Run Jest tests                           |
+| `npm run test:watch` | Run tests in watch mode                  |
+| `npm run type-check` | TypeScript type checking                 |
+
+## Publishing
+
+To publish a new version to npm:
+
+1. Update version number:
+   - Patch (bug fixes): `npm version patch`
+   - Minor (new features): `npm version minor`
+   - Major (breaking changes): `npm version major`
+
+2. Push the version tag:
+   ```bash
+   git push && git push --tags
+   ```
+
+3. Create a GitHub release - this will automatically publish to npm via CI/CD.
 
 ## Examples
 
-An example experiment is available in the `/examples` folder
+Example experiments are available in the `/examples` folder.
 
 ## Compatibility
 
@@ -42,7 +79,29 @@ An example experiment is available in the `/examples` folder
 
 ## Documentation
 
-See [documentation](/docs/plugin-math-games.md)
+See [documentation](/docs/plugin-math-games.md) for full API reference.
+
+## Troubleshooting
+
+### `npm install` fails with peer dependency errors
+
+Try using `npm install --legacy-peer-deps` or update to Node.js v24+.
+
+### Tests fail with `__PACKAGE_VERSION__ is not defined`
+
+This should be fixed in the latest version. If you see this error, ensure you have the latest `jest.config.cjs`.
+
+### Build fails with missing assets
+
+Ensure you have all files from `src/assets/`. If cloning fresh, these should be included in the repository.
+
+### `npm run dev` shows blank page
+
+Check the browser console for errors. Ensure all dependencies are installed with `npm install`.
+
+## License
+
+MIT - see [LICENSE](LICENSE) for details.
 
 ## Author / Citation
 

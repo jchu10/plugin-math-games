@@ -1,9 +1,8 @@
 **/node_modules
 .DS_Store
-dist/**
-dev/assets/**
-examples/assets/**
-src/assets/**
-examples/data/**
+dist/*
+dev/assets/
+examples/assets/
+examples/data/
 **/todo.md
 .npmrc

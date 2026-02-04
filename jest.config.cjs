@@ -9,6 +9,7 @@ module.exports = {
     },
     // Keep existing transform but ensure React JSX is handled
     globals: {
+        '__PACKAGE_VERSION__': '0.0.0-test',
         'ts-jest': {
             tsconfig: {
                 jsx: 'react-jsx',
