@@ -41,8 +41,6 @@ export class GameWelcome extends Scene {
     }
 
     preload() {
-        this.load.setPath('assets');
-
         if (this.gameConfig?.cover_story === "MoonMissionGame") {
             this.load.image('game_bg_img', 'starrynight.png');
         } else if (this.gameConfig?.cover_story === "HomeworkHelperGame") {

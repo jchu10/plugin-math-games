@@ -39,7 +39,6 @@ export class GameOver extends Scene {
     }
 
     preload() {
-        this.load.setPath('assets');
         console.log("gameover gameConfig", this.gameConfig);
         if (this.gameConfig?.cover_story === "MoonMissionGame") {
             this.load.image('game_bg_img', 'starrynight.png');

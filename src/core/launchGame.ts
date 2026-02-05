@@ -30,6 +30,9 @@ export const launchGame = (containerId: string, config: GameConfig): Phaser.Game
             touch: false,
             gamepad: false
         },
+        loader: {
+            baseURL: '/assets/',
+        },
         scene: [GameWelcome, GameScene, GameOver], // Tell Phaser which scenes to use
     };
 

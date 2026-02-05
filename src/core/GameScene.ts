@@ -240,7 +240,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.setPath('assets');
         this.load.image('cube', 'cube.png');
         this.load.image('fullheart', 'fullheart.png');
         this.load.image('Sound', 'Sound.png');

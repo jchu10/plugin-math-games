@@ -8,8 +8,8 @@
 
     <!-- plugins -->
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
-    <script src="../dist/index.browser.js"></script>
-    <!-- <script type="module" src="https://unpkg.com/plugin-math-games"></script> -->
+    <!-- <script src="../dist/index.browser.js"></script> -->
+    <script type="module" src="https://unpkg.com/plugin-math-games"></script>
 
 </head>
 
@@ -26,6 +26,18 @@
                 jsPsych.data.displayData();
             }
         });
+
+        function emitData(data) {
+            // Wrap game data with experiment-wide identifiers
+            const json = _.extend({},
+                { study_metadata: { project: 'math-games', experiment: 'math-games-rating-debug' } },
+                { session_info: { gameID: 'debugGameID' } },
+                data);
+
+            // Send to MongoDB via socket.io
+            // socket.emit('currentData', json, 'math-games', 'math-games-rating-debug', 'debugGameID');
+            console.log(json);
+        };
 
         const hello = {
             type: jsPsychHtmlButtonResponse,
@@ -49,7 +61,8 @@
             hint_type: stim.hint_type,
             feedback_type: stim.feedback_type,
             preamble: "<h3>Math Game Trial 1</h3>",
-            game_size: [600, 1000]
+            game_size: [600, 1000],
+            emit_data_callback: emitData
         }
 
         const trial2 = {
@@ -59,7 +72,8 @@
             hint_type: "powerup",
             feedback_type: "explanation",
             preamble: "<h3>Math Game Trial 2</h3>",
-            game_size: [600, 1000]
+            game_size: [600, 1000],
+            emit_data_callback: emitData
         }
 
         jsPsych.run([hello, trial1, hello, trial2]);

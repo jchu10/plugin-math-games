@@ -31,13 +31,14 @@ configs.forEach((cfg) => {
         postcss({ modules: false, extract: false, inject: true }),
 
         // 1) handle media imports
-        url({
-            include: ["**/*.png", "**/*.mp3", "**/*.wav", "**/*.flac"],
-            // limit: Infinity,               // inline every asset as base64
-            fileName: "assets/[name][extname]",
-            // publicPath: "/dist/",  // the import will resolve to "dist/assets/..."
-            // destDir: "dist",        // base output folder
-        }),
+        url(),
+        // url({
+        //     include: ["**/*.png", "**/*.mp3", "**/*.wav", "**/*.flac"],
+        //     // limit: Infinity,               // inline every asset as base64
+        //     fileName: "assets/[name][extname]",
+        //     // publicPath: "/dist/",  // the import will resolve to "dist/assets/..."
+        //     // destDir: "dist",        // base output folder
+        // }),
 
         // 2) handle your package.json + other JSON
         json(),
@@ -48,7 +49,8 @@ configs.forEach((cfg) => {
         // Add the copy plugin at the end to ensure it runs after bundling
         copy({
             targets: [
-                { src: 'src/assets/**/*', dest: 'dist/assets' },
+                // { src: 'src/assets/**/*', dest: 'dist/assets' },
+                { src: 'public/*', dest: 'dist/' },
             ],
             // Optional: You might want to remove this if you only want explicitly imported files 
             // that the 'url' plugin handles, but this ensures everything else is copied.
