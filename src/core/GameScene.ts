@@ -64,6 +64,7 @@ export class GameScene extends Phaser.Scene {
     private powertoolActive: boolean = false;
     private sandboxPopup?: Phaser.GameObjects.Container;
     private sandboxActive: boolean = false;
+    private numberLineAnimationTimers: Phaser.Time.TimerEvent[] = [];
     private pausedAsteroidVelocities: number[] = [];
     private timerPaused: boolean = false;
     private powertoolUsedThisQuestion: boolean = false;
@@ -1685,6 +1686,9 @@ export class GameScene extends Phaser.Scene {
         // console.log('=== OPENING NUMBER LINE POPUP ===');
         // console.log('Current question:', this.currentQuestion);
 
+        // Clear any existing animation timers from previous popups
+        this.numberLineAnimationTimers = [];
+
         this.sandboxActive = true;
         this.powertoolActive = true;
         this.pauseGameEntities();
@@ -1854,7 +1858,7 @@ export class GameScene extends Phaser.Scene {
                 }).setOrigin(0.5).setDepth(2004);
                 if (this.sandboxPopup) this.sandboxPopup.add(lblObj);
                 // label fades after 500ms delay
-                this.time.delayedCall(500, () => {
+                const fadeTimer = this.time.delayedCall(500, () => {
                     if (lblObj) {
                         this.tweens.add({
                             targets: lblObj,
@@ -1867,6 +1871,7 @@ export class GameScene extends Phaser.Scene {
                         });
                     }
                 });
+                this.numberLineAnimationTimers.push(fadeTimer);
             }
         };
 
@@ -1885,7 +1890,7 @@ export class GameScene extends Phaser.Scene {
             for (let i = 0; i < tensToSubtract; i++) {
                 const jumpStart = currentPos;
                 // console.log(`Scheduling 10-count jump ${i + 1}: from ${jumpStart} to ${jumpStart - 10} at delay ${animationDelay}ms`);
-                this.time.delayedCall(animationDelay, () => {
+                const tensTimer = this.time.delayedCall(animationDelay, () => {
                     // console.log(`Executing 10-count jump: from ${jumpStart} to ${jumpStart - 10}`);
                     if (this.sandboxPopup) {
                         drawJump(jumpStart, -10, 0x2d89ff, '-' + (10 + (i * 10)));
@@ -1893,6 +1898,7 @@ export class GameScene extends Phaser.Scene {
                         console.error('ERROR: sandboxPopup is undefined during animation!');
                     }
                 });
+                this.numberLineAnimationTimers.push(tensTimer);
                 currentPos -= 10;
                 animationDelay += 800; // 800ms delay between each 10-count
             }
@@ -1901,7 +1907,7 @@ export class GameScene extends Phaser.Scene {
             for (let i = 0; i < unitsToSubtract; i++) {
                 const jumpStart = currentPos - i;
                 // console.log(`Scheduling unit jump ${i + 1}: from ${jumpStart} to ${jumpStart - 1} at delay ${animationDelay}ms`);
-                this.time.delayedCall(animationDelay, () => {
+                const unitTimer = this.time.delayedCall(animationDelay, () => {
                     // console.log(`Executing unit jump: from ${jumpStart} to ${jumpStart - 1}`);
                     if (this.sandboxPopup) {
                         drawJump(jumpStart, -1, 0xff4444, '-' + (1 + i));
@@ -1909,12 +1915,13 @@ export class GameScene extends Phaser.Scene {
                         console.error('ERROR: sandboxPopup is undefined during animation!');
                     }
                 });
+                this.numberLineAnimationTimers.push(unitTimer);
                 animationDelay += 600; // 600ms delay between each unit count
             }
 
             // Mark the end point (difference) after all animations
             // console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
-            this.time.delayedCall(animationDelay + 400, () => {
+            const finalMarkerTimer = this.time.delayedCall(animationDelay + 400, () => {
                 if (!this.sandboxPopup) return;
                 // console.log(`Showing final marker at ${sum}`);
                 const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
@@ -1924,6 +1931,7 @@ export class GameScene extends Phaser.Scene {
                 }).setOrigin(0.5).setDepth(2003);
                 this.sandboxPopup.add(endLabel);
             });
+            this.numberLineAnimationTimers.push(finalMarkerTimer);
         } else {
             console.log('=== ENTERING ADDITION ANIMATION ===');
             let animationDelay = 0;
@@ -1935,7 +1943,7 @@ export class GameScene extends Phaser.Scene {
             for (let i = 0; i < tensCount; i++) {
                 const jumpStart = firstAddend + (i * 10);
                 // console.log(`Scheduling 10-count jump ${i + 1}: from ${jumpStart} to ${jumpStart + 10} at delay ${animationDelay}ms`);
-                this.time.delayedCall(animationDelay, () => {
+                const tensTimer = this.time.delayedCall(animationDelay, () => {
                     // console.log(`Executing 10-count jump: from ${jumpStart} to ${jumpStart + 10}`);
                     if (this.sandboxPopup) {
                         drawJump(jumpStart, 10, 0x2d89ff, '+' + (10 + (i * 10)));
@@ -1943,6 +1951,7 @@ export class GameScene extends Phaser.Scene {
                         // console.log('ERROR: sandboxPopup is undefined during animation!');
                     }
                 });
+                this.numberLineAnimationTimers.push(tensTimer);
                 animationDelay += 800; // 800ms delay between each 10-count
             }
 
@@ -1950,7 +1959,7 @@ export class GameScene extends Phaser.Scene {
             for (let i = 0; i < unitsCount; i++) {
                 const jumpStart = firstAddend + (tensCount * 10) + i;
                 // console.log(`Scheduling unit jump ${i + 1}: from ${jumpStart} to ${jumpStart + 1} at delay ${animationDelay}ms`);
-                this.time.delayedCall(animationDelay, () => {
+                const unitTimer = this.time.delayedCall(animationDelay, () => {
                     // console.log(`Executing unit jump: from ${jumpStart} to ${jumpStart + 1}`);
                     if (this.sandboxPopup) {
                         drawJump(jumpStart, 1, 0xff4444, '+' + (1 + (i * 1)));
@@ -1958,12 +1967,13 @@ export class GameScene extends Phaser.Scene {
                         console.log('ERROR: sandboxPopup is undefined during animation!');
                     }
                 });
+                this.numberLineAnimationTimers.push(unitTimer);
                 animationDelay += 600; // 600ms delay between each unit count
             }
 
             // Mark the end point (sum) after all animations
             // console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
-            this.time.delayedCall(animationDelay + 400, () => {
+            const finalMarkerTimer = this.time.delayedCall(animationDelay + 400, () => {
                 if (!this.sandboxPopup) return;
                 // console.log(`Showing final marker at ${sum}`);
                 const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
@@ -1981,11 +1991,20 @@ export class GameScene extends Phaser.Scene {
                 // gotItBtn.on('pointerdown', () => this.closeNumberLinePopup());
                 // this.sandboxPopup.add(gotItBtn);// this.sandboxPopup.add(explain);
             });
+            this.numberLineAnimationTimers.push(finalMarkerTimer);
         }
 
     }
 
     private closeNumberLinePopup() {
+        // Cancel all pending animation timers
+        for (const timer of this.numberLineAnimationTimers) {
+            if (timer) {
+                timer.destroy();
+            }
+        }
+        this.numberLineAnimationTimers = [];
+
         this.sandboxActive = false;
         this.powertoolActive = false;
         this.resumeGameEntities();
@@ -2045,6 +2064,14 @@ export class GameScene extends Phaser.Scene {
         if (this.logger) {
             this.logger.cleanup();
         }
+        // Clean up animation timers
+        for (const timer of this.numberLineAnimationTimers) {
+            if (timer) {
+                timer.destroy();
+            }
+        }
+        this.numberLineAnimationTimers = [];
+
         if (this.sandboxPopup) {
             this.sandboxPopup.destroy();
         }
