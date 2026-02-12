@@ -1484,7 +1484,7 @@ export class GameScene extends Phaser.Scene {
             // Add label if needed
 
             const lbl = this.add.text(x, y, answer.toString(), {
-                font: `${Math.floor(32 * scaleFactor)}px Arial`, color: this.optionLabelColor, fontStyle: 'bold', stroke: this.optionLabelStroke, strokeThickness: Math.floor(5 * scaleFactor)
+                font: `${Math.floor(48 * scaleFactor)}px Arial`, color: this.optionLabelColor, fontStyle: 'bold', stroke: this.optionLabelStroke, strokeThickness: Math.floor(5 * scaleFactor)
             }).setOrigin(0.5).setDepth(depth + 100);
             obj.setData('label', lbl);
             this.answerObjectLabels.push(lbl);
