@@ -1490,18 +1490,25 @@ export class GameScene extends Phaser.Scene {
                 spawnIndex: i
             });
 
-            // Add label if needed
-            const strokeThickness = type === 'asteroid' ? Math.floor(6 * scaleFactor) : Math.floor(5 * scaleFactor);
+            // Add label if needed - asteroids use high-contrast styling with shadow for visibility
+            const strokeThickness = type === 'asteroid' ? Math.floor(10 * scaleFactor) : Math.floor(5 * scaleFactor);
+            const fontSize = type === 'asteroid' ? Math.floor(36 * scaleFactor) : Math.floor(32 * scaleFactor);
             const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-                font: `${Math.floor(32 * scaleFactor)}px Arial`,
-                color: this.optionLabelColor,
+                font: `${fontSize}px Arial`,
+                color: type === 'asteroid' ? '#000000' : this.optionLabelColor,
                 fontStyle: 'bold',
-                stroke: this.optionLabelStroke,
+                stroke: type === 'asteroid' ? '#ffffff' : this.optionLabelStroke,
                 strokeThickness
             };
             if (type === 'asteroid') {
-                labelStyle.backgroundColor = '#000000cc';
-                labelStyle.padding = { left: Math.floor(10 * scaleFactor), right: Math.floor(10 * scaleFactor), top: Math.floor(4 * scaleFactor), bottom: Math.floor(4 * scaleFactor) };
+                labelStyle.shadow = {
+                    offsetX: 0,
+                    offsetY: 0,
+                    color: '#ffffff',
+                    blur: 8,
+                    fill: true,
+                    stroke: true
+                };
             }
             const lbl = this.add.text(x, y, answer.toString(), labelStyle).setOrigin(0.5).setDepth(depth + 100);
             obj.setData('label', lbl);
