@@ -427,7 +427,12 @@ export class GameScene extends Phaser.Scene {
             }
 
             this.spaceship.x += this.shipVel * dt;
-            this.spaceship.x = Phaser.Math.Clamp(this.spaceship.x, this.gameAreaX + 40, this.gameAreaX + this.gameAreaSize - 40);
+            // Keep pencil right of hint button; use hint/powertool icon right edge + padding when present
+            const hintIcon = this.gameConfig.hint_type === 'powerup' ? this.hintIcon : this.powertoolIcon;
+            const pencilMinX = hintIcon
+                ? hintIcon.x + hintIcon.displayWidth + 8
+                : this.gameAreaX + 40;
+            this.spaceship.x = Phaser.Math.Clamp(this.spaceship.x, pencilMinX, this.gameAreaX + this.gameAreaSize - 40);
 
             // Laser movement
             const whiteBarBottom = this.gameAreaY + 85;
@@ -544,6 +549,9 @@ export class GameScene extends Phaser.Scene {
     checkAnswer(asteroid: Phaser.Physics.Arcade.Image) {
         if (this.feedbackActive || this.gameOver) return;
 
+        // Block additional clicks immediately to prevent double-click from exploding two asteroids
+        this.feedbackActive = true;
+
         const selected = asteroid.getData('answer');
         const isCorrect = selected === this.currentQuestion.correctAnswer;
         this.lastAnswerCorrect = isCorrect;
@@ -623,6 +631,7 @@ export class GameScene extends Phaser.Scene {
             this.explodeAsteroid(asteroid);
             this.clearAnswerObjects();
             this.time.delayedCall(isCorrect ? 500 : 0, () => {
+                this.feedbackActive = false; // Allow input for next question
                 // Check if game should end (no lives left)
                 if (this.lives === 0) {
                     // Log game over
@@ -1481,11 +1490,27 @@ export class GameScene extends Phaser.Scene {
                 spawnIndex: i
             });
 
-            // Add label if needed
-
-            const lbl = this.add.text(x, y, answer.toString(), {
-                font: `${Math.floor(48 * scaleFactor)}px Arial`, color: this.optionLabelColor, fontStyle: 'bold', stroke: this.optionLabelStroke, strokeThickness: Math.floor(5 * scaleFactor)
-            }).setOrigin(0.5).setDepth(depth + 100);
+            // Add label if needed - asteroids use high-contrast styling with shadow for visibility
+            const strokeThickness = type === 'asteroid' ? Math.floor(10 * scaleFactor) : Math.floor(5 * scaleFactor);
+            const fontSize = type === 'asteroid' ? Math.floor(36 * scaleFactor) : Math.floor(32 * scaleFactor);
+            const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+                font: `${fontSize}px Arial`,
+                color: type === 'asteroid' ? '#000000' : this.optionLabelColor,
+                fontStyle: 'bold',
+                stroke: type === 'asteroid' ? '#ffffff' : this.optionLabelStroke,
+                strokeThickness
+            };
+            if (type === 'asteroid') {
+                labelStyle.shadow = {
+                    offsetX: 0,
+                    offsetY: 0,
+                    color: '#ffffff',
+                    blur: 8,
+                    fill: true,
+                    stroke: true
+                };
+            }
+            const lbl = this.add.text(x, y, answer.toString(), labelStyle).setOrigin(0.5).setDepth(depth + 100);
             obj.setData('label', lbl);
             this.answerObjectLabels.push(lbl);
 
@@ -1827,10 +1852,25 @@ export class GameScene extends Phaser.Scene {
             this.sandboxPopup.add(arrow);
         }
 
+        // Track previous step marker so we can remove it when the next step proceeds
+        let previousStepDot: Phaser.GameObjects.Arc | null = null;
+        let previousStepLabel: Phaser.GameObjects.Text | null = null;
+
         // Draw jumps using "counting on" method
         const drawJump = (from: number, by: number, color: number, label: string) => {
+            // Remove previous step marker before adding the new one
+            if (previousStepDot) {
+                previousStepDot.destroy();
+                previousStepDot = null;
+            }
+            if (previousStepLabel) {
+                previousStepLabel.destroy();
+                previousStepLabel = null;
+            }
+
+            const newVal = from + by;
             const startX = toX(from);
-            const endX = toX(from + by);
+            const endX = toX(newVal);
             const midX = (startX + endX) / 2;
             const height = by === 1 ? 20 : 40; // Smaller height for unit counts
 
@@ -1849,6 +1889,17 @@ export class GameScene extends Phaser.Scene {
                 arrow.lineTo(pts[i].x, pts[i].y);
             }
             arrow.strokePath();
+
+            // Add position marker and label beneath the line for this step
+            const stepX = toX(newVal);
+            const stepDot = this.add.circle(stepX, lineY, 5, 0x222222).setDepth(2003);
+            this.sandboxPopup.add(stepDot);
+            const stepLabel = this.add.text(stepX, lineY + 14, newVal.toString(), {
+                font: '18px Arial', color: '#222'
+            }).setOrigin(0.5, 0).setDepth(2003);
+            this.sandboxPopup.add(stepLabel);
+            previousStepDot = stepDot;
+            previousStepLabel = stepLabel;
 
             if (label) {
                 // "-1" "+1" label at the top of the arc
@@ -1900,7 +1951,7 @@ export class GameScene extends Phaser.Scene {
                 });
                 this.numberLineAnimationTimers.push(tensTimer);
                 currentPos -= 10;
-                animationDelay += 800; // 800ms delay between each 10-count
+                animationDelay += 1200; // 1200ms delay between each 10-count (1.5x slowed)
             }
 
             // Draw unit count jumps (red) one at a time - animate each one going backwards
@@ -1916,14 +1967,21 @@ export class GameScene extends Phaser.Scene {
                     }
                 });
                 this.numberLineAnimationTimers.push(unitTimer);
-                animationDelay += 600; // 600ms delay between each unit count
+                animationDelay += 900; // 900ms delay between each unit count (1.5x slowed)
             }
 
             // Mark the end point (difference) after all animations
             // console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
             const finalMarkerTimer = this.time.delayedCall(animationDelay + 400, () => {
                 if (!this.sandboxPopup) return;
-                // console.log(`Showing final marker at ${sum}`);
+                if (previousStepDot) {
+                    previousStepDot.destroy();
+                    previousStepDot = null;
+                }
+                if (previousStepLabel) {
+                    previousStepLabel.destroy();
+                    previousStepLabel = null;
+                }
                 const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
                 this.sandboxPopup.add(endDot);
                 const endLabel = this.add.text(toX(sum), lineY - 25, sum.toString(), {
@@ -1952,7 +2010,7 @@ export class GameScene extends Phaser.Scene {
                     }
                 });
                 this.numberLineAnimationTimers.push(tensTimer);
-                animationDelay += 800; // 800ms delay between each 10-count
+                animationDelay += 1200; // 1200ms delay between each 10-count (1.5x slowed)
             }
 
             // Draw unit count jumps (red) one at a time - animate each one
@@ -1968,14 +2026,21 @@ export class GameScene extends Phaser.Scene {
                     }
                 });
                 this.numberLineAnimationTimers.push(unitTimer);
-                animationDelay += 600; // 600ms delay between each unit count
+                animationDelay += 900; // 900ms delay between each unit count (1.5x slowed)
             }
 
             // Mark the end point (sum) after all animations
             // console.log(`Scheduling final marker at delay ${animationDelay + 400}ms`);
             const finalMarkerTimer = this.time.delayedCall(animationDelay + 400, () => {
                 if (!this.sandboxPopup) return;
-                // console.log(`Showing final marker at ${sum}`);
+                if (previousStepDot) {
+                    previousStepDot.destroy();
+                    previousStepDot = null;
+                }
+                if (previousStepLabel) {
+                    previousStepLabel.destroy();
+                    previousStepLabel = null;
+                }
                 const endDot = this.add.circle(toX(sum), lineY, 6, 0x00aa66).setDepth(2003);
                 this.sandboxPopup.add(endDot);
                 const endLabel = this.add.text(toX(sum), lineY - 25, sum.toString(), {
