@@ -6,6 +6,7 @@
     <script src="https://unpkg.com/jspsych@8.2.2"></script>
     <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@2.2.0"></script>
     <script src="https://unpkg.com/lodash@4.17.21"></script>
 </head>
 
@@ -16,76 +17,73 @@
     <script type="module">
         import MathGamesPlugin from '../src/index.ts';
 
-        const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
+        const jsPsych = initJsPsych({ display_element: 'jspsych-target', on_finish: () => jsPsych.data.displayData() });
 
-        // Optional: Define emitData callback for real-time MongoDB transmission
-        // This enables three-level emission: per-event, round-level batching, and trial-level batching
-        // Example usage (requires socket.io connection):
         function emitData(data) {
-            // Wrap game data with experiment-wide identifiers
-            const json = _.extend({},
-                { study_metadata: { project: 'math-games', experiment: 'math-games-rating-debug' } },
-                { session_info: { gameID: 'debugGameID' } },
-                data);
-
-            // Send to MongoDB via socket.io
-            console.log(json);
-            // socket.emit('currentData', json, 'math-games', 'math-games-rating-debug', 'debugGameID');
+            console.log('Event emitted:', data);
         }
 
-        const hello = {
-            type: jsPsychHtmlButtonResponse,
-            stimulus: 'Press begin to start the math game trials.',
-            choices: ['Begin']
+        const stim = {
+            cover_story: "MoonMissionGame",
+            controls: "arrowKeys",
+            hint_type: "none",
+            feedback_type: "explosion"
         }
 
-        const bye = {
-            type: jsPsychHtmlButtonResponse,
-            stimulus: 'Done.',
-            choices: ['Finished']
+        const configure_game = {
+            type: jsPsychSurveyMultiChoice,
+            // preamble: '<h3>Choose your desired math game configuration.</h3>',
+            questions: [
+                {
+                    prompt: "<b>What cover story?</b>",
+                    name: 'cover_story',
+                    options: ['MoonMissionGame', 'HomeworkHelperGame'],
+                    required: true,
+                },
+                {
+                    prompt: "<b>What controls?</b>",
+                    name: 'controls',
+                    options: ['tapToSelect', 'arrowKeys'],
+                    required: true,
+                },
+                {
+                    prompt: "<b>What kind of feedback after each response?</b>",
+                    name: 'feedback_type',
+                    options: ['none', 'explosion', 'explanation'],
+                    required: true,
+                },
+                {
+                    prompt: "<b>What kinds of hints?</b>",
+                    name: 'hint_type',
+                    options: ['none', 'powerup', 'stepByStep'],
+                    required: true,
+                }
+            ],
+            button_label: 'Start Game',
+            on_finish: function (data) {
+                stim.cover_story = data.response.cover_story;
+                stim.controls = data.response.controls;
+                stim.hint_type = data.response.hint_type;
+                stim.feedback_type = data.response.feedback_type;
+            }
         }
 
-        // jsPsych.run([hello, trial, bye]);
-
-        // // Specify parameters for one math game trial
-        const stim1 = {
-            "cover_story": "MoonMissionGame",//"HomeworkHelperGame",
-            "controls": "tapToSelect",
-            "hint_type": "powerup",
-            "feedback_type": "explosion",
-            "max_trial_duration": 10000,
-            "show_finished_button": false, // game auto proceeds when trial duration is up
-            "show_countdown_trial_duration": true,
-        }
-
-        const stim2 = {
-            "cover_story": "HomeworkHelperGame",//"HomeworkHelperGame",
-            "controls": "arrowKeys",
-            "hint_type": "stepByStep",
-            "feedback_type": "explanation",
-            "min_trial_duration": 5000,
-            "show_finished_button": true,
-            "show_countdown_trial_duration": true,
-        }
-
-        const stim3 = {
-            "cover_story": "MoonMissionGame",
-            "controls": "arrowKeys",
-            "hint_type": "stepByStep",
-            "feedback_type": "explanation"
-        }
-
-        const math_trials = {
+        var math_trials = {
             type: MathGamesPlugin,
-            timeline: [stim1, stim2, stim3],
+            cover_story: stim.cover_story,
+            controls: stim.controls,
+            hint_type: stim.hint_type,
+            feedback_type: stim.feedback_type,
+            prompt: "<h3>Your Math Game</h3>",
             game_size: [560, 900],
-            prompt: "<h3>Try this game!</h3>",
-            game_duration_limit: 8, // in seconds
-            display_in_game_timer: true,
-            emit_data_callback: emitData
+            max_trial_duration: 120 * 1000, // in ms
+            game_duration_limit: 30, // in seconds
+            show_countdown_trial_duration: true,
+            display_in_game_timer: false,
+            emit_data_callback: emitData,
         }
 
-        jsPsych.run([hello, math_trials, bye]);
+        jsPsych.run([configure_game, math_trials]);
 
     </script>
 
