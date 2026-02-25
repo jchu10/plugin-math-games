@@ -1,36 +1,34 @@
-import { Scene } from 'phaser';
-import { GameConfig } from './types';
+import { GameConfig, GameTheme } from './types';
+import { resolveTheme } from './themes/index';
+import { BaseGameScene } from './BaseGameScene';
 
-export class GameWelcome extends Scene {
+export class GameWelcome extends BaseGameScene {
     private background!: Phaser.GameObjects.Image;
     welcome_text!: Phaser.GameObjects.Text;
     start_button!: Phaser.GameObjects.Text;
     private gameAreaBorder!: Phaser.GameObjects.Graphics;
     private gameConfig!: GameConfig;
+    private theme!: GameTheme;
 
     constructor() {
         super('GameWelcome');
     }
 
-    // The 'init' method receives data passed from 'scene.start'
     public init(data: GameConfig) {
         this.gameConfig = data;
+        this.theme = resolveTheme(data.cover_story);
     }
 
-    private handleResize() {
-        const gameAreaHeight = Math.floor(this.scale.height - 10);
-        const gameAreaSize = Math.floor(gameAreaHeight * 1.5);
-        const gameAreaX = (this.scale.width - gameAreaSize) / 2;
-        const gameAreaY = (this.scale.height - gameAreaHeight) / 2;
-
+    protected onResize(): void {
         if (this.background) {
-            this.background.setPosition(gameAreaX + gameAreaSize / 2, gameAreaY + gameAreaHeight / 2);
-            this.background.setDisplaySize(gameAreaSize, gameAreaHeight);
+            this.background.setPosition(
+                this.gameAreaX + this.gameAreaSize / 2,
+                this.gameAreaY + this.gameAreaHeight / 2
+            );
+            this.background.setDisplaySize(this.gameAreaSize, this.gameAreaHeight);
         }
         if (this.gameAreaBorder) {
-            this.gameAreaBorder.clear();
-            this.gameAreaBorder.lineStyle(4, 0x000000, 1);
-            this.gameAreaBorder.strokeRect(gameAreaX, gameAreaY, gameAreaSize, gameAreaHeight);
+            this.drawGameAreaBorder(this.gameAreaBorder);
         }
         if (this.welcome_text) {
             const scaleFactor = this.scale.height / 1080;
@@ -41,61 +39,36 @@ export class GameWelcome extends Scene {
     }
 
     preload() {
-        if (this.gameConfig?.cover_story === "MoonMissionGame") {
-            this.load.image('game_bg_img', 'starrynight.png');
-        } else if (this.gameConfig?.cover_story === "HomeworkHelperGame") {
-            this.load.image('game_bg_img', 'classroom.png');
-        } else {
-            console.log("No valid cover_story found, loading default background.");
-        }
+        this.load.image('game_bg_img', this.theme.backgroundImage);
     }
 
     create() {
+        this.calculateGameArea();
         this.cameras.main.setBackgroundColor('#ffffff');
-        const gameAreaHeight = Math.floor(this.scale.height * 0.9);
-        const gameAreaSize = Math.floor(gameAreaHeight * 1.5);
-        const gameAreaX = (this.scale.width - gameAreaSize) / 2;
-        const gameAreaY = (this.scale.height - gameAreaHeight) / 2;
 
         this.background = this.add.image(
-            gameAreaX + gameAreaSize / 2,
-            gameAreaY + gameAreaHeight / 2,
+            this.gameAreaX + this.gameAreaSize / 2,
+            this.gameAreaY + this.gameAreaHeight / 2,
             'game_bg_img'
         );
-        this.background.setDisplaySize(gameAreaSize, gameAreaHeight);
+        this.background.setDisplaySize(this.gameAreaSize, this.gameAreaHeight);
         this.background.setOrigin(0.5, 0.5);
 
         this.gameAreaBorder = this.add.graphics();
-        this.gameAreaBorder.lineStyle(4, 0x000000, 1);
-        this.gameAreaBorder.strokeRect(gameAreaX, gameAreaY, gameAreaSize, gameAreaHeight);
+        this.drawGameAreaBorder(this.gameAreaBorder);
         this.gameAreaBorder.setDepth(100);
 
-        this.scale.on('resize', this.handleResize, this);
-        let welcome_text_content = 'Welcome to the Math Game!\n\n';
-
-        if (this.gameConfig.controls === 'tapToSelect') {
-            welcome_text_content += 'In this game you will use your mouse\nto click on objects.';
-            this.print_welcome_message(welcome_text_content);
-            this.print_start_button('Click here to start');
-
-        } else {
-            // this.gameConfig.controls === 'arrowKeys'
-            welcome_text_content += 'Use LEFT/RIGHT arrow keys to move the pencil.\nUse SPACE to toss the pencil at an idea cloud.';
-
-            this.print_welcome_message(welcome_text_content);
-            this.print_start_button('Click here to start');
-        }
+        const welcomeBody = this.theme.welcomeText(this.gameConfig.controls);
+        this.print_welcome_message('Welcome to the Math Game!\n\n' + welcomeBody);
+        this.print_start_button('Click here to start');
 
         this.start_button.setInteractive({ useHandCursor: true });
         this.start_button.on('pointerdown', () => {
-            // disable start button
             this.start_button.disableInteractive();
             this.scene.start('GameScene', this.gameConfig);
-            // this.game.events.emit('StartGame')
         });
 
-        // Listen for resize events
-        this.scale.on('resize', this.handleResize, this);
+        this.registerResizeHandler();
     }
 
     private print_welcome_message(text) {
@@ -105,11 +78,10 @@ export class GameWelcome extends Scene {
             text,
             {
                 fontSize: '24px',
-                color: this.gameConfig?.cover_story === "MoonMissionGame" ? '#ffffff' : '#000000',
+                color: this.theme.welcomeTextColor,
                 align: 'center',
             }
         );
-
         this.welcome_text.setOrigin(0.5, 0.5);
     }
 

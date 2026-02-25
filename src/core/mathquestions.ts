@@ -4,7 +4,7 @@
 
 import { MathQuestion, QuestionDifficulty } from './types';
 
-const QUESTION_BANK: MathQuestion[] = [
+export const QUESTION_BANK: MathQuestion[] = [
   // VERY EASY
   { question: '2 + 5 = ?', correctAnswer: 7, options: [27, 7, 6, 17, 8, 6], difficulty: QuestionDifficulty.veryeasy },
   { question: '6 + 2 = ?', correctAnswer: 8, options: [18, 9, 8, 28, 5, 19], difficulty: QuestionDifficulty.veryeasy },
@@ -46,57 +46,73 @@ const QUESTION_BANK: MathQuestion[] = [
   { question: '43 - 15 = ?', correctAnswer: 28, options: [41, 28, 18, 24, 33, 38], difficulty: QuestionDifficulty.veryhard },
 ];
 
-const getRandomElement = (arr: any[]) =>
-  arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined
-
 // 2. The service class that manages question logic
 export class MathQuestionService {
   private questions: MathQuestion[];
   private currentDifficulty: QuestionDifficulty = QuestionDifficulty.medium;
-  private availableQuestions: MathQuestion[];
+  // Tracks which question indices have been shown at each difficulty to avoid repetition
+  private usedIndices: Map<QuestionDifficulty, Set<number>> = new Map();
 
-  constructor() {
-    this.questions = [...QUESTION_BANK]; // Copy the master list
-    this.availableQuestions = this.filterByDifficulty(this.currentDifficulty);
+  constructor(bank: MathQuestion[] = QUESTION_BANK) {
+    this.questions = [...bank];
   }
 
   private filterByDifficulty(difficulty: QuestionDifficulty): MathQuestion[] {
     return this.questions.filter(q => q.difficulty === difficulty);
   }
 
-  // Pick a random question from the available questions
-  public pickRandomQuestion(): MathQuestion | undefined {
-    return getRandomElement(this.availableQuestions);
+  private pickFromPool(pool: MathQuestion[], difficulty: QuestionDifficulty): MathQuestion {
+    if (!this.usedIndices.has(difficulty)) {
+      this.usedIndices.set(difficulty, new Set());
+    }
+    const used = this.usedIndices.get(difficulty)!;
+
+    // Build the list of indices not yet used at this difficulty
+    const allIndices = pool.map((_, i) => i);
+    let available = allIndices.filter(i => !used.has(i));
+
+    // When all questions at this difficulty have been seen, reset the pool
+    if (available.length === 0) {
+      used.clear();
+      available = allIndices;
+    }
+
+    const chosen = available[Math.floor(Math.random() * available.length)];
+    used.add(chosen);
+    return pool[chosen];
   }
 
-  // update difficulty based on whether the last answer was correct
+  // Pick a random question from the current difficulty level
+  public pickRandomQuestion(): MathQuestion | undefined {
+    const pool = this.filterByDifficulty(this.currentDifficulty);
+    if (pool.length === 0) return undefined;
+    return this.pickFromPool(pool, this.currentDifficulty);
+  }
+
+  // Staircase: update difficulty based on last answer, then pick next question
   public getNextQuestion(wasCorrect: boolean): MathQuestion {
-    // This is your core game logic!
     if (!wasCorrect && Math.random() < 0.5) {
-      // 50% chance to get easier
-      if (this.currentDifficulty > QuestionDifficulty.easy) {
+      if (this.currentDifficulty > QuestionDifficulty.veryeasy) {
         this.currentDifficulty--;
       }
     }
 
     if (wasCorrect && Math.random() < 0.5) {
-      // 50% chance to get harder
       if (this.currentDifficulty < QuestionDifficulty.veryhard) {
         this.currentDifficulty++;
       }
     }
 
-    // Get all questions for the current difficulty
-    let questionPool = this.filterByDifficulty(this.currentDifficulty);
+    const pool = this.filterByDifficulty(this.currentDifficulty);
+    return this.pickFromPool(pool, this.currentDifficulty);
+  }
 
-    // If we've run out, reset the pool (or just use all questions)
-    if (questionPool.length === 0) {
-      console.warn(`No more questions at difficulty ${this.currentDifficulty}. Resetting pool.`);
-      questionPool = this.filterByDifficulty(this.currentDifficulty);
+  // Random: pick uniformly from all difficulties, ignoring staircase logic
+  public getRandomQuestion(): MathQuestion {
+    if (this.questions.length === 0) {
+      console.warn('Question bank is empty.');
+      return this.questions[0];
     }
-
-    // Pick a random question from the pool
-    const randomIndex = Math.floor(Math.random() * questionPool.length);
-    return questionPool[randomIndex];
+    return this.questions[Math.floor(Math.random() * this.questions.length)];
   }
 }

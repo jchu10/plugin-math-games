@@ -1,11 +1,13 @@
-import { Scene } from 'phaser';
-import { GameConfig } from './types';
+import { GameConfig, GameTheme } from './types';
+import { resolveTheme } from './themes/index';
+import { BaseGameScene } from './BaseGameScene';
 
-export class GameOver extends Scene {
+export class GameOver extends BaseGameScene {
     background!: Phaser.GameObjects.Image;
     gameover_text!: Phaser.GameObjects.Text;
     private gameAreaBorder!: Phaser.GameObjects.Graphics;
     private gameConfig!: GameConfig;
+    private theme!: GameTheme;
 
     constructor() {
         super('GameOver');
@@ -13,22 +15,19 @@ export class GameOver extends Scene {
 
     public init(data: GameConfig) {
         this.gameConfig = data;
+        this.theme = resolveTheme(data.cover_story);
     }
 
-    private handleResize() {
-        const gameAreaHeight = Math.floor(this.scale.height - 10);
-        const gameAreaSize = Math.floor(gameAreaHeight * 1.5);
-        const gameAreaX = (this.scale.width - gameAreaSize) / 2;
-        const gameAreaY = (this.scale.height - gameAreaHeight) / 2;
-
+    protected onResize(): void {
         if (this.background) {
-            this.background.setPosition(gameAreaX + gameAreaSize / 2, gameAreaY + gameAreaHeight / 2);
-            this.background.setDisplaySize(gameAreaSize, gameAreaHeight);
+            this.background.setPosition(
+                this.gameAreaX + this.gameAreaSize / 2,
+                this.gameAreaY + this.gameAreaHeight / 2
+            );
+            this.background.setDisplaySize(this.gameAreaSize, this.gameAreaHeight);
         }
         if (this.gameAreaBorder) {
-            this.gameAreaBorder.clear();
-            this.gameAreaBorder.lineStyle(4, 0x000000, 1);
-            this.gameAreaBorder.strokeRect(gameAreaX, gameAreaY, gameAreaSize, gameAreaHeight);
+            this.drawGameAreaBorder(this.gameAreaBorder);
         }
         if (this.gameover_text) {
             const scaleFactor = this.scale.height / 1080;
@@ -39,37 +38,24 @@ export class GameOver extends Scene {
     }
 
     preload() {
-        console.log("gameover gameConfig", this.gameConfig);
-        if (this.gameConfig?.cover_story === "MoonMissionGame") {
-            this.load.image('game_bg_img', 'starrynight.png');
-        } else if (this.gameConfig?.cover_story === "HomeworkHelperGame") {
-            this.load.image('game_bg_img', 'classroom.png');
-        } else {
-            console.log("No valid cover_story found, loading default background.");
-        }
+        this.load.image('game_bg_img', this.theme.backgroundImage);
     }
 
-    create(data: { gameConfig?: any } = {}) {
+    create() {
+        this.calculateGameArea();
         this.cameras.main.setBackgroundColor('#ffffff');
-        const gameAreaHeight = Math.floor(this.scale.height * 0.9);
-        const gameAreaSize = Math.floor(gameAreaHeight * 1.5);
-        const gameAreaX = (this.scale.width - gameAreaSize) / 2;
-        const gameAreaY = (this.scale.height - gameAreaHeight) / 2;
 
         this.background = this.add.image(
-            gameAreaX + gameAreaSize / 2,
-            gameAreaY + gameAreaHeight / 2,
+            this.gameAreaX + this.gameAreaSize / 2,
+            this.gameAreaY + this.gameAreaHeight / 2,
             'game_bg_img'
         );
-        this.background.setDisplaySize(gameAreaSize, gameAreaHeight);
+        this.background.setDisplaySize(this.gameAreaSize, this.gameAreaHeight);
         this.background.setOrigin(0.5, 0.5);
 
         this.gameAreaBorder = this.add.graphics();
-        this.gameAreaBorder.lineStyle(4, 0x000000, 1);
-        this.gameAreaBorder.strokeRect(gameAreaX, gameAreaY, gameAreaSize, gameAreaHeight);
+        this.drawGameAreaBorder(this.gameAreaBorder);
         this.gameAreaBorder.setDepth(100);
-
-        this.scale.on('resize', this.handleResize, this);
 
         this.gameover_text = this.add.text(
             this.scale.width / 2,
@@ -85,7 +71,6 @@ export class GameOver extends Scene {
         );
         this.gameover_text.setOrigin(0.5);
 
-        // Add "Try Again" button below the Game Over text
         const button = this.add.text(
             this.scale.width / 2,
             this.scale.height / 3 * 2,
@@ -98,18 +83,14 @@ export class GameOver extends Scene {
                 padding: { left: 32, right: 32, top: 16, bottom: 16 },
                 align: 'center',
                 fontStyle: 'bold',
-                // borderRadius: 12 // Not supported by Phaser TextStyle
             }
         ).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         button.on('pointerdown', () => {
-            // disable button
             button.disableInteractive();
-            // Restart the game scene
             this.scene.start('GameScene', this.gameConfig);
         });
 
-        // Listen for resize events
-        this.scale.on('resize', this.handleResize, this);
+        this.registerResizeHandler();
     }
 }

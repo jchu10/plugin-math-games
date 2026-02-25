@@ -51,13 +51,13 @@ const info = <const>{
     /** Hint type provided to the user during the game */
     hint_type: {
       type: ParameterType.SELECT,
-      options: ["multipleChoice", "stepByStep", "none"],
+      options: ["none", "powerup", "stepByStep"],
       default: "none"
     },
     /** Feedback type after answering a question */
     feedback_type: {
       type: ParameterType.SELECT,
-      options: ["none", "explosion", "correctHighlight"],
+      options: ["none", "explosion", "explanation"],
       default: "none"
     },
     /** Logic of how next question difficulty is selected. Staircase has 50% chance of increasing difficulty (after correct response) and 50% chance of decreasing difficulty (after incorrect response). */
@@ -87,6 +87,11 @@ const info = <const>{
       type: ParameterType.INT,
       array: true,
       default: [600, 800],
+    },
+    /** Optional custom question bank. Array of MathQuestion objects. When omitted, the built-in 30-question bank is used. */
+    question_bank: {
+      type: ParameterType.COMPLEX,
+      default: undefined,
     },
     /** Optional callback function for real-time data emission to server (e.g., MongoDB via socket.io) */
     emit_data_callback: {
@@ -192,6 +197,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
         time_limit: this.params.game_duration_limit,
         difficulty: this.params.difficulty,
         show_timer: this.params.display_in_game_timer,
+        question_bank: this.params.question_bank,
         emitDataCallback: this.params.emit_data_callback,
       }
     };

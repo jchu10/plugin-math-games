@@ -1,12 +1,14 @@
 import * as Phaser from 'phaser';
 import { MathQuestionService } from './mathquestions';
-import { MathQuestion, Response, GameConfig, LogEvent, QuestionDifficulty } from './types';
+import { MathQuestion, Response, GameConfig, LogEvent, QuestionDifficulty, GameTheme } from './types';
 import { getLogger, GameState, resetLogger } from './GameLogger';
+import { resolveTheme } from './themes/index';
 
 import { drawRoundedRect, drawStar } from './uiUtils';
 
 export class GameScene extends Phaser.Scene {
     private gameConfig!: GameConfig;
+    private theme!: GameTheme;
     private questionService!: MathQuestionService;
     private currentQuestion!: MathQuestion;
     private lastAnswerCorrect: boolean = false;
@@ -112,6 +114,7 @@ export class GameScene extends Phaser.Scene {
     // The 'init' method receives data passed from 'scene.start'
     public init(data: GameConfig) {
         this.gameConfig = data;
+        this.theme = resolveTheme(data.cover_story);
         // Reset and initialize logger with callback from gameConfig
         resetLogger();
         this.logger = getLogger(this.gameConfig?.emitDataCallback);
@@ -247,30 +250,18 @@ export class GameScene extends Phaser.Scene {
         this.load.image('powerup', 'powerup.png');
         this.load.image('powertool', 'powertool.png');
 
-        if (this.gameConfig.cover_story === 'MoonMissionGame') {
-            this.optionLabelColor = "#fff";
-            this.optionLabelStroke = "#000";
-            this.load.image('game_bg_img', 'starrynight.png');
-            this.load.image('spaceship', 'spaceship.png');
-            this.load.image('answerObject1', 'asteroid1.png');
-            this.load.image('answerObject2', 'asteroid2.png');
-            this.load.image('answerObject3', 'asteroid3.png');
-            if (this.gameConfig.feedback_type === 'explosion') {
-                // this.load.audio('explosion', 'explosion.mp3');
-                this.load.audio('explosion1', 'explosion.wav');
-            }
-
-            if (this.gameConfig.controls === 'arrowKeys') {
-                this.load.audio('lasershot', 'lasershot.wav');
-            }
-        } else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
-            this.load.image('game_bg_img', 'classroom.png');
-            this.load.image('answerObject1', 'thoughtbubble.png');
-            this.load.image('answerObject2', 'thoughtbubble2.png');
-            this.load.image('answerObject3', 'thoughtbubble3.png');
-            this.load.image('spaceship', 'pencil.png');
-            this.load.audio('explosion1', 'bubblepop.flac');
-            this.load.audio('lasershot', 'lasershot.wav');
+        this.optionLabelColor = this.theme.answerLabelColor;
+        this.optionLabelStroke = this.theme.answerLabelStroke;
+        this.load.image('game_bg_img', this.theme.backgroundImage);
+        this.load.image('spaceship', this.theme.playerImage);
+        this.theme.answerObjectImages.forEach((filename, i) => {
+            this.load.image(`answerObject${i + 1}`, filename);
+        });
+        // 'explosion1' and 'lasershot' are the stable Phaser keys used throughout GameScene.
+        // The actual audio files are theme-specific.
+        this.load.audio('explosion1', this.theme.correctSoundFile);
+        if (this.theme.shootSoundFile) {
+            this.load.audio('lasershot', this.theme.shootSoundFile);
         }
         // Show background
         this.add.image(512, 384, 'background');
@@ -304,30 +295,9 @@ export class GameScene extends Phaser.Scene {
                     if (this.gameConfig.show_timer && this.timerText) {
                         this.timerText.setText('0:00');
                     }
-                    this.gameOver = true;
-
-                    // Log game over
-                    const totalTime = Date.now() - this.gameStartTime;
-                    const avgTimePerQuestion = (this.correctCount + this.incorrectCount) > 0
-                        ? totalTime / (this.correctCount + this.incorrectCount)
-                        : 0;
-
-                    this.updateGameState();
-                    this.logger.logEvent('game_over', {
-                        reason: 'time_up',
-                        questionsShown: this.questionsShown,
-                        questionsAnswered: this.correctCount + this.incorrectCount,
-                        correctCount: this.correctCount,
-                        incorrectCount: this.incorrectCount,
-                        totalHintsUsed: this.hintUses,
-                        totalTime: totalTime,
-                        averageTimePerQuestion: avgTimePerQuestion
-                    });
-                    this.logger.cleanup();
-
-                    // Show time's up message
+                    // Show time's up message before ending
                     this.showTimesUpMessage();
-                    this.triggerGameOverTransition();
+                    this.endGame('time_up');
                 }
             }
         }
@@ -377,27 +347,8 @@ export class GameScene extends Phaser.Scene {
                 }
                 this.loseLife();
                 this.clearAnswerObjects();
-                // Check if game should end (no lives left)
                 if (this.lives === 0) {
-                    // Log game over
-                    const totalTime = Date.now() - this.gameStartTime;
-                    const avgTimePerQuestion = (this.correctCount + this.incorrectCount) > 0
-                        ? totalTime / (this.correctCount + this.incorrectCount)
-                        : 0;
-
-                    this.updateGameState();
-                    this.logger.logEvent('game_over', {
-                        reason: 'lives_lost',
-                        questionsShown: this.questionsShown,
-                        questionsAnswered: this.correctCount + this.incorrectCount,
-                        correctCount: this.correctCount,
-                        incorrectCount: this.incorrectCount,
-                        totalHintsUsed: this.hintUses,
-                        totalTime: totalTime,
-                        averageTimePerQuestion: avgTimePerQuestion
-                    });
-                    this.logger.cleanup();
-                    this.triggerGameOverTransition();
+                    this.endGame('lives_lost');
                 } else {
                     this.showNextQuestion();
                 }
@@ -631,29 +582,9 @@ export class GameScene extends Phaser.Scene {
             this.explodeAsteroid(asteroid);
             this.clearAnswerObjects();
             this.time.delayedCall(isCorrect ? 500 : 0, () => {
-                this.feedbackActive = false; // Allow input for next question
-                // Check if game should end (no lives left)
+                this.feedbackActive = false;
                 if (this.lives === 0) {
-                    // Log game over
-                    const totalTime = Date.now() - this.gameStartTime;
-                    const avgTimePerQuestion = (this.correctCount + this.incorrectCount) > 0
-                        ? totalTime / (this.correctCount + this.incorrectCount)
-                        : 0;
-
-                    this.updateGameState();
-                    this.logger.logEvent('game_over', {
-                        reason: 'lives_lost',
-                        questionsShown: this.questionsShown,
-                        questionsAnswered: this.correctCount + this.incorrectCount,
-                        correctCount: this.correctCount,
-                        incorrectCount: this.incorrectCount,
-                        totalHintsUsed: this.hintUses,
-                        totalTime: totalTime,
-                        averageTimePerQuestion: avgTimePerQuestion
-                    });
-                    this.logger.cleanup();
-
-                    this.triggerGameOverTransition();
+                    this.endGame('lives_lost');
                 } else {
                     this.showNextQuestion();
                 }
@@ -672,6 +603,38 @@ export class GameScene extends Phaser.Scene {
             this.game.events.emit('GameOver');
             this.scene.start('GameOver', this.gameConfig);
         });
+    }
+
+    /**
+     * Centralised game-over handler: logs the event, cleans up the logger,
+     * and starts the scene transition.  For 'user_quit' the transition is
+     * immediate (no delay) because the End-Game button already gives clear
+     * visual feedback.
+     */
+    private endGame(reason: 'time_up' | 'lives_lost' | 'user_quit') {
+        this.gameOver = true;
+        const totalTime = Date.now() - this.gameStartTime;
+        const questionsAnswered = this.correctCount + this.incorrectCount;
+        const avgTimePerQuestion = questionsAnswered > 0 ? totalTime / questionsAnswered : 0;
+
+        this.updateGameState();
+        this.logger.logEvent('game_over', {
+            reason,
+            questionsShown: this.questionsShown,
+            questionsAnswered,
+            correctCount: this.correctCount,
+            incorrectCount: this.incorrectCount,
+            totalHintsUsed: this.hintUses,
+            totalTime,
+            averageTimePerQuestion: avgTimePerQuestion,
+        });
+        this.logger.cleanup();
+
+        if (reason === 'user_quit') {
+            this.scene.start('GameOver', this.gameConfig);
+        } else {
+            this.triggerGameOverTransition();
+        }
     }
 
     private showTimesUpMessage() {
@@ -824,27 +787,8 @@ export class GameScene extends Phaser.Scene {
             this.feedbackPopup = undefined;
             this.feedbackActive = false;
             this.resumeGameEntities();
-            // Check if game should end (no lives left)
             if (this.lives === 0) {
-                // Log game over
-                const totalTime = Date.now() - this.gameStartTime;
-                const avgTimePerQuestion = (this.correctCount + this.incorrectCount) > 0
-                    ? totalTime / (this.correctCount + this.incorrectCount)
-                    : 0;
-
-                this.updateGameState();
-                this.logger.logEvent('game_over', {
-                    reason: 'lives_lost',
-                    questionsShown: this.questionsShown,
-                    questionsAnswered: this.correctCount + this.incorrectCount,
-                    correctCount: this.correctCount,
-                    incorrectCount: this.incorrectCount,
-                    totalHintsUsed: this.hintUses,
-                    totalTime: totalTime,
-                    averageTimePerQuestion: avgTimePerQuestion
-                });
-                this.logger.cleanup();
-                this.triggerGameOverTransition();
+                this.endGame('lives_lost');
             } else {
                 this.showNextQuestion();
             }
@@ -879,7 +823,7 @@ export class GameScene extends Phaser.Scene {
             this.progressContainer.destroy();
             this.progressContainer = undefined;
         }
-        this.questionService = new MathQuestionService();
+        this.questionService = new MathQuestionService(this.gameConfig.question_bank);
         // Reset state
         this.correctCount = 0;
         this.lives = 3;
@@ -970,34 +914,13 @@ export class GameScene extends Phaser.Scene {
         }).setOrigin(0, 0.5).setDepth(1002).setInteractive();
         this.endBtn.on('pointerdown', () => {
             if (this.sandboxActive || this.feedbackActive) return;
-            const timeElapsed = Date.now() - this.gameStartTime;
             this.updateGameState();
             this.logger.logEvent('end_game_pressed', {
-                timeElapsed: timeElapsed,
-                questionsAnswered: this.correctCount + (this.questionsShown - this.correctCount),
+                timeElapsed: Date.now() - this.gameStartTime,
+                questionsAnswered: this.correctCount + this.incorrectCount,
                 currentScore: this.correctCount
             });
-
-            // Log game over
-            const avgTimePerQuestion = this.correctCount + (this.questionsShown - this.correctCount) > 0
-                ? timeElapsed / (this.correctCount + (this.questionsShown - this.correctCount))
-                : 0;
-
-            this.logger.logEvent('game_over', {
-                reason: 'user_quit',
-                finalScore: this.correctCount,
-                questionsShown: this.questionsShown,
-                questionsAnswered: this.correctCount + (this.questionsShown - this.correctCount),
-                correctCount: this.correctCount,
-                incorrectCount: this.questionsShown - this.correctCount,
-                totalHintsUsed: this.hintUses,
-                totalTime: timeElapsed,
-                averageTimePerQuestion: avgTimePerQuestion
-            });
-            this.logger.cleanup();
-
-            this.scene.start('GameOver', this.gameConfig);
-
+            this.endGame('user_quit');
         });
 
         // Timer (top right of game area)
@@ -1320,8 +1243,10 @@ export class GameScene extends Phaser.Scene {
         this.questionStartTime = Date.now();
         this.questionsShown += 1;
 
-        // Get next question based on last answer correctness
-        this.currentQuestion = this.questionService.getNextQuestion(this.lastAnswerCorrect);
+        // Get next question using the configured sequence logic
+        this.currentQuestion = this.gameConfig.question_sequence_logic === 'random'
+            ? this.questionService.getRandomQuestion()
+            : this.questionService.getNextQuestion(this.lastAnswerCorrect);
 
         // Update question text
         this.questionText.setText(this.currentQuestion.question);
@@ -1357,25 +1282,17 @@ export class GameScene extends Phaser.Scene {
         this.powertoolActive = false;
         this.powerupFromFeedback = false;
 
-        // Spawn answer objects and collect their data
-        let asteroidSpawnData: any[] = [];
-        if (this.gameConfig.cover_story === 'MoonMissionGame') {
-            asteroidSpawnData = this.spawnAnswerObjects(
-                'asteroid',
-                (i, x) => this.gameAreaY + 85,
-                [0.18, 0.35],
-                (i) => Phaser.Math.Between(30, 65) * 0.5,
-                150,
-            );
-        } else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
-            asteroidSpawnData = this.spawnAnswerObjects(
-                'thoughtbubble',
-                (i, x) => this.gameAreaY + this.gameAreaHeight - Math.floor(this.baseBottomBarHeight * (this.scale.height / 1080)),
-                [0.28, 0.45],
-                (i) => -Phaser.Math.Between(30, 65) * 0.5,
-                50,
-            );
-        }
+        // Spawn answer objects using theme-defined configuration
+        const spawnY = this.theme.answerSpawnFromBottom
+            ? this.gameAreaY + this.gameAreaHeight - Math.floor(this.baseBottomBarHeight * (this.scale.height / 1080))
+            : this.gameAreaY + 85;
+        const velocitySign = this.theme.answerSpawnFromBottom ? -1 : 1;
+        const asteroidSpawnData = this.spawnAnswerObjects(
+            () => spawnY,
+            this.theme.answerScaleRange,
+            (i) => velocitySign * Phaser.Math.Between(30, 65) * 0.5,
+            this.theme.answerDepth,
+        );
 
         // Log a single consolidated question_shown event with all asteroid spawn details
         const questionId = `${this.currentQuestion.question}_${this.currentQuestion.correctAnswer}`;
@@ -1391,7 +1308,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     spawnAnswerObjects(
-        type: 'asteroid' | 'thoughtbubble',
         yPosition: (i: number, x: number) => number,
         scaleRange: [number, number],
         velocity: (i: number) => number,
@@ -1406,8 +1322,8 @@ export class GameScene extends Phaser.Scene {
         const starExtension = (progressBarWidth / 2) + 20 + 20;
         const progressBarPadding = 20;
 
-        // Exclusion zone logic
-        const maxObjectSize = (type === 'asteroid' ? 0.35 : 0.45) * scaleFactor * 200;
+        // Exclusion zone: use the theme's max scale to determine object size
+        const maxObjectSize = scaleRange[1] * scaleFactor * 200;
         const progressBarRight = progressX + progressBarWidth + progressBarPadding + (maxObjectSize * 0.5);
         const minX = Math.max(this.gameAreaX + 12, Math.ceil(progressBarRight));
         const maxX = this.gameAreaX + this.gameAreaSize - 50;
@@ -1490,17 +1406,17 @@ export class GameScene extends Phaser.Scene {
                 spawnIndex: i
             });
 
-            // Add label if needed - asteroids use high-contrast styling with shadow for visibility
-            const strokeThickness = type === 'asteroid' ? Math.floor(10 * scaleFactor) : Math.floor(5 * scaleFactor);
-            const fontSize = type === 'asteroid' ? Math.floor(36 * scaleFactor) : Math.floor(32 * scaleFactor);
+            // Label styling comes from the active theme
+            const strokeThickness = Math.floor(this.theme.answerLabelStrokeWidth * scaleFactor);
+            const fontSize = Math.floor(this.theme.answerLabelFontSize * scaleFactor);
             const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
                 font: `${fontSize}px Arial`,
-                color: type === 'asteroid' ? '#000000' : this.optionLabelColor,
+                color: this.optionLabelColor,
                 fontStyle: 'bold',
-                stroke: type === 'asteroid' ? '#ffffff' : this.optionLabelStroke,
+                stroke: this.optionLabelStroke,
                 strokeThickness
             };
-            if (type === 'asteroid') {
+            if (this.theme.answerLabelShadow) {
                 labelStyle.shadow = {
                     offsetX: 0,
                     offsetY: 0,
@@ -1618,68 +1534,31 @@ export class GameScene extends Phaser.Scene {
         this.answerObjects.getChildren().forEach((answerObj: Phaser.GameObjects.GameObject) => {
             const sprite = answerObj as Phaser.Physics.Arcade.Image;
             const label = sprite.getData('label') as Phaser.GameObjects.Text;
+            const isHintedOut = this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer;
+            const hintAlphaCap = 0.3;
 
-            // Get top and bottom of object
             const objTop = sprite.y - sprite.displayHeight / 2;
             const objBottom = sprite.y + sprite.displayHeight / 2;
 
-            // Moon Mission: asteroids fall, fade at bottom
-            if (this.gameConfig.cover_story === 'MoonMissionGame') {
+            let visibleRatio = 1;
+            if (this.theme.answerSpawnFromBottom) {
+                // Objects rise from the bottom — fade out as they pass the top white bar
+                const clipEdge = this.gameAreaY + 60;
+                if (objTop < clipEdge) {
+                    const clipped = clipEdge - objTop;
+                    visibleRatio = Math.max(0, (sprite.displayHeight - clipped) / sprite.displayHeight);
+                }
+            } else {
+                // Objects fall from the top — fade out as they cross into the bottom bar
                 if (objBottom > this.clippingBorderY) {
-                    const clippedHeight = objBottom - this.clippingBorderY;
-                    const totalHeight = sprite.displayHeight;
-                    const visibleRatio = Math.max(0, (totalHeight - clippedHeight) / totalHeight);
-                    if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
-                        sprite.setAlpha(Math.min(visibleRatio, 0.3));
-                        if (label) label.setAlpha(Math.min(visibleRatio, 0.3));
-                    } else {
-                        sprite.setAlpha(visibleRatio);
-                        if (label) label.setAlpha(visibleRatio);
-                    }
-                } else {
-                    if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
-                        sprite.setAlpha(0.3);
-                        if (label) label.setAlpha(0.3);
-                    } else {
-                        sprite.setAlpha(1);
-                        if (label) label.setAlpha(1);
-                    }
+                    const clipped = objBottom - this.clippingBorderY;
+                    visibleRatio = Math.max(0, (sprite.displayHeight - clipped) / sprite.displayHeight);
                 }
             }
-            // HomeworkHelp: thought bubbles rise, fade at top
-            else if (this.gameConfig.cover_story === 'HomeworkHelperGame') {
-                const whiteBarBottom = this.gameAreaY + 60;
-                if (objTop < whiteBarBottom) {
-                    const clippedHeight = whiteBarBottom - objTop;
-                    const totalHeight = sprite.displayHeight;
-                    const visibleRatio = Math.max(0, (totalHeight - clippedHeight) / totalHeight);
-                    if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
-                        sprite.setAlpha(Math.min(visibleRatio, 0.3));
-                        if (label) label.setAlpha(Math.min(visibleRatio, 0.3));
-                    } else {
-                        sprite.setAlpha(visibleRatio);
-                        if (label) label.setAlpha(visibleRatio);
-                    }
-                } else {
-                    if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
-                        sprite.setAlpha(0.3);
-                        if (label) label.setAlpha(0.3);
-                    } else {
-                        sprite.setAlpha(1);
-                        if (label) label.setAlpha(1);
-                    }
-                }
-            }
-            // Default: no clipping/fading
-            else {
-                if (this.hintActive && sprite.getData('answer') !== this.currentQuestion.correctAnswer) {
-                    sprite.setAlpha(0.3);
-                    if (label) label.setAlpha(0.3);
-                } else {
-                    sprite.setAlpha(1);
-                    if (label) label.setAlpha(1);
-                }
-            }
+
+            const alpha = isHintedOut ? Math.min(visibleRatio, hintAlphaCap) : visibleRatio;
+            sprite.setAlpha(alpha);
+            if (label) label.setAlpha(alpha);
         });
     }
 
