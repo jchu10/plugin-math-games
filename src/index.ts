@@ -51,13 +51,13 @@ const info = <const>{
     /** Hint type provided to the user during the game */
     hint_type: {
       type: ParameterType.SELECT,
-      options: ["multipleChoice", "stepByStep", "none"],
+      options: ["powerup", "stepByStep", "none"],
       default: "none"
     },
     /** Feedback type after answering a question */
     feedback_type: {
       type: ParameterType.SELECT,
-      options: ["none", "explosion", "correctHighlight"],
+      options: ["none", "explosion", "explanation"],
       default: "none"
     },
     /** Logic of how next question difficulty is selected. Staircase has 50% chance of increasing difficulty (after correct response) and 50% chance of decreasing difficulty (after incorrect response). */

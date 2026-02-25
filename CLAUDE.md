@@ -59,8 +59,8 @@ Event data flows up: Phaser events → `GameLogger` → `emitDataCallback` (real
 
 - `cover_story`: Game theme (`MoonMissionGame` | `HomeworkHelperGame`)
 - `controls`: `arrowKeys` | `tapToSelect`
-- `hint_type`: `none` | `stepByStep` | `multipleChoice` (note: also `powerup` in types.ts)
-- `feedback_type`: `none` | `explosion` | `correctHighlight` (note: `explanation` in types.ts)
+- `hint_type`: `none` | `stepByStep` | `powerup`
+- `feedback_type`: `none` | `explosion` | `explanation`
 - `question_sequence_logic`: `staircase` (adaptive) | `random`
 - `emit_data_callback`: Function for real-time event streaming
 - `min_trial_duration` / `max_trial_duration`: Control trial timing in ms
