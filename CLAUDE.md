@@ -38,11 +38,12 @@ Event Logging (core/GameLogger.ts)
    - `GameWelcome.ts` - Instructions and start button
    - `GameScene.ts` - Main gameplay: question generation, physics, collision detection, scoring, lives, feedback
    - `GameOver.tsx` - End screen with retry option
+   - All three scenes extend `BaseGameScene` (`core/BaseGameScene.ts`), which provides shared layout helpers: `calculateGameArea()`, `drawGameAreaBorder()`, and `registerResizeHandler()`.
 
 4. **Supporting Services**:
-   - `MathQuestionService` (`mathquestions.ts`) - Question pool with 5 difficulty levels (`veryeasy` through `veryhard`), staircase algorithm
+   - `MathQuestionService` (`mathquestions.ts`) - Manages question selection. Accepts an optional custom `QuestionBank` (array of `MathQuestion`). Supports staircase (adaptive difficulty) and random selection modes. Tracks used questions per difficulty to avoid repetition.
    - `GameLogger.ts` - Singleton event tracker with three emission levels (per-event, round-batch, trial-batch)
-   - `types.ts` - TypeScript interfaces (`GameConfig`, `MathQuestion`, `LogEvent`, etc.)
+   - `types.ts` - TypeScript interfaces (`GameConfig`, `GameTheme`, `MathQuestion`, `QuestionBank`, `LogEvent`, etc.)
 
 ### Data Flow
 
@@ -52,18 +53,47 @@ Event data flows up: Phaser events → `GameLogger` → `emitDataCallback` (real
 
 ### Game Themes
 
-- **MoonMissionGame**: Arrow key controls, spaceship, asteroids as answer objects
-- **HomeworkHelperGame**: Tap-to-select controls, classroom background, thought bubbles
+Themes are defined as `GameTheme` objects in `src/core/themes/` and registered in `src/core/themes/index.ts`. Each theme encapsulates all skin-specific knowledge: asset filenames, sounds, spawn parameters, answer-label styling, and welcome text.
+
+**Adding a new theme requires only:**
+1. Create `src/core/themes/MyTheme.ts` exporting a `GameTheme` object
+2. Add one entry to `GAME_THEMES` in `src/core/themes/index.ts`
+3. Place asset files in `/assets/`
+
+No changes to `GameScene`, `GameWelcome`, or `GameOver` are needed.
+
+Built-in themes:
+- **MoonMissionGame**: Starry background, spaceship avatar, falling asteroids, explosion sounds
+- **HomeworkHelperGame**: Classroom background, pencil avatar, rising thought bubbles, bubble-pop sounds
 
 ### Key Configuration Options
 
 - `cover_story`: Game theme (`MoonMissionGame` | `HomeworkHelperGame`)
 - `controls`: `arrowKeys` | `tapToSelect`
-- `hint_type`: `none` | `stepByStep` | `multipleChoice` (note: also `powerup` in types.ts)
-- `feedback_type`: `none` | `explosion` | `correctHighlight` (note: `explanation` in types.ts)
+- `hint_type`: `none` | `powerup` | `stepByStep`
+- `feedback_type`: `none` | `explosion` | `explanation`
 - `question_sequence_logic`: `staircase` (adaptive) | `random`
+- `question_bank`: Optional `MathQuestion[]` — when provided, replaces the built-in 30-question bank. Each question needs `question`, `correctAnswer`, `options`, and `difficulty`. Optional `topic` and `source` fields are logged for analysis.
 - `emit_data_callback`: Function for real-time event streaming
 - `min_trial_duration` / `max_trial_duration`: Control trial timing in ms
+
+### Question Bank Format
+
+```ts
+const myQuestions: MathQuestion[] = [
+  {
+    question: "12 × 3 = ?",
+    correctAnswer: 36,
+    options: [33, 36, 39, 42],
+    difficulty: QuestionDifficulty.medium,
+    topic: "multiplication",
+    source: "mathgames.com"
+  },
+  // ...
+];
+```
+
+Pass via jsPsych: `{ type: MathGamesPlugin, cover_story: 'MoonMissionGame', question_bank: myQuestions, ... }`
 
 ## Testing
 
