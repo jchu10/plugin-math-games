@@ -42,6 +42,7 @@ export interface Response {
 }
 
 export type gameVersion = "MoonMissionGame" | "HomeworkHelperGame";
+export type gameMechanic = 'flyingObjects' | 'dragAndDrop' | 'numberLine' | 'tilePicker';
 export type gameControls = "arrowKeys" | "tapToSelect";
 export type hintType = "none" | "powerup" | "stepByStep";
 export type feedbackType = "none" | "explosion" | "explanation";
@@ -84,6 +85,7 @@ export interface GameConfig {
   difficulty: QuestionDifficulty; // initial math difficulty
   question_sequence_logic: questionSequence; // how to adjust difficulty
   show_timer?: boolean; // whether to display timer text
+  game_mechanic?: gameMechanic;  // which play mechanic to use; defaults to 'flyingObjects' for backwards compatibility
   question_bank?: QuestionBank; // custom question set; falls back to built-in bank when absent
   emitDataCallback?: (data: any) => void; // optional callback for real-time data emission to server
 }

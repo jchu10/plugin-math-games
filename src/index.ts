@@ -88,6 +88,12 @@ const info = <const>{
       array: true,
       default: [600, 800],
     },
+    /** Which game mechanic (play style) to use. Defaults to 'flyingObjects' for full backwards compatibility. */
+    game_mechanic: {
+      type: ParameterType.SELECT,
+      options: ["flyingObjects", "dragAndDrop", "numberLine", "tilePicker"],
+      default: "flyingObjects",
+    },
     /** Optional custom question bank. Array of MathQuestion objects. When omitted, the built-in 30-question bank is used. */
     question_bank: {
       type: ParameterType.COMPLEX,
@@ -197,6 +203,7 @@ class MathGamesPlugin implements JsPsychPlugin<Info> {
         time_limit: this.params.game_duration_limit,
         difficulty: this.params.difficulty,
         show_timer: this.params.display_in_game_timer,
+        game_mechanic: this.params.game_mechanic,
         question_bank: this.params.question_bank,
         emitDataCallback: this.params.emit_data_callback,
       }

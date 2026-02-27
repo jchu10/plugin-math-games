@@ -35,10 +35,11 @@ Event Logging (core/GameLogger.ts)
 2. **React Wrapper**: `MathGamesPluginWrapper.tsx` bridges jsPsych and React, mounting/unmounting the app. `MathGamesApp.tsx` creates the Phaser container and calls `launchGame()`.
 
 3. **Phaser Scenes** (in `src/core/`):
-   - `GameWelcome.ts` - Instructions and start button
-   - `GameScene.ts` - Main gameplay: question generation, physics, collision detection, scoring, lives, feedback
-   - `GameOver.tsx` - End screen with retry option
-   - All three scenes extend `BaseGameScene` (`core/BaseGameScene.ts`), which provides shared layout helpers: `calculateGameArea()`, `drawGameAreaBorder()`, and `registerResizeHandler()`.
+   - `GameWelcome.ts` - Instructions and start button; extends `BaseGameScene`
+   - `GameScene.ts` - Flying-objects mechanic (the current default play scene); extends `BasePlayScene`
+   - `GameOver.tsx` - End screen with retry option; extends `BaseGameScene`
+   - `BaseGameScene.ts` - Abstract base for all scenes: `calculateGameArea()`, `drawGameAreaBorder()`, `registerResizeHandler()`
+   - `BasePlayScene.ts` - Abstract base for all *play* scenes (the middle scene in the Welcome → Play → GameOver lifecycle). Owns HUD, timer, lives, question sequencing, logging, and scene transitions. Subclasses implement four hooks to add a new mechanic without duplicating session infrastructure.
 
 4. **Supporting Services**:
    - `MathQuestionService` (`mathquestions.ts`) - Manages question selection. Accepts an optional custom `QuestionBank` (array of `MathQuestion`). Supports staircase (adaptive difficulty) and random selection modes. Tracks used questions per difficulty to avoid repetition.
@@ -66,9 +67,34 @@ Built-in themes:
 - **MoonMissionGame**: Starry background, spaceship avatar, falling asteroids, explosion sounds
 - **HomeworkHelperGame**: Classroom background, pencil avatar, rising thought bubbles, bubble-pop sounds
 
+### Game Mechanics
+
+Game mechanics (play styles) are registered in `MECHANIC_SCENES` in `src/core/launchGame.ts`. `launchGame()` selects the correct play-scene class at runtime based on `config.game_mechanic`.
+
+**Adding a new mechanic requires only:**
+1. Create `src/core/mechanics/MyScene.ts` that extends `BasePlayScene` and implements four hooks:
+   - `setupMechanic()` — build mechanic-specific game objects in `create()`
+   - `onQuestionReady(question)` — present a new question to the player
+   - `onResize()` — reposition mechanic objects (call `super.onResize()` first)
+   - `getEndGamePayload()` — return extra fields for the `game_over` log event (optional)
+2. Add one entry to `MECHANIC_SCENES` in `src/core/launchGame.ts`
+3. Place asset files in `/assets/`
+
+No changes to `GameWelcome`, `GameOver`, `BaseGameScene`, `GameLogger`, `themes/`, or `mathquestions.ts` are needed.
+
+**Prioritized mechanics to implement next (by research value ÷ effort):**
+1. **Tile grid / button picker** — ~150–200 LOC; removes motion confound; clean control condition
+2. **Flash cards / timed reveal** — ~100–150 LOC; useful baseline for spaced-repetition designs
+3. **Number line placement** — ~350–450 LOC; gold-standard measure of magnitude understanding
+4. **Drag & drop matching** — ~400–500 LOC; enables ordering and equivalence tasks
+
+Currently registered mechanics:
+- **flyingObjects** (default): answer objects move across the screen; player shoots or taps
+
 ### Key Configuration Options
 
 - `cover_story`: Game theme (`MoonMissionGame` | `HomeworkHelperGame`)
+- `game_mechanic`: Play style (`flyingObjects` | `dragAndDrop` | `numberLine` | `tilePicker`); defaults to `flyingObjects`
 - `controls`: `arrowKeys` | `tapToSelect`
 - `hint_type`: `none` | `powerup` | `stepByStep`
 - `feedback_type`: `none` | `explosion` | `explanation`
