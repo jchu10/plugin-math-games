@@ -39,7 +39,7 @@ const info = <const>{
     /** Cover story of the game */
     cover_story: {
       type: ParameterType.SELECT,
-      options: ["MoonMissionGame", "HomeworkHelperGame"],
+      options: ["MoonMissionGame", "HomeworkHelperGame", "UnderwaterDiverGame"],
       default: "MoonMissionGame"
     },
     /** Control scheme for the game */

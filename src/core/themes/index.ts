@@ -1,6 +1,7 @@
 import { GameTheme } from '../types';
 import { MoonMissionTheme } from './MoonMissionTheme';
 import { HomeworkHelperTheme } from './HomeworkHelperTheme';
+import { UnderwaterDiverTheme } from './UnderwaterDiverTheme';
 
 /**
  * Central registry of available game themes.
@@ -13,6 +14,7 @@ import { HomeworkHelperTheme } from './HomeworkHelperTheme';
 export const GAME_THEMES: Record<string, GameTheme> = {
     MoonMissionGame: MoonMissionTheme,
     HomeworkHelperGame: HomeworkHelperTheme,
+    UnderwaterDiverGame: UnderwaterDiverTheme,
 };
 
 export function resolveTheme(id: string): GameTheme {

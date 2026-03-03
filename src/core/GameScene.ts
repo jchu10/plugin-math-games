@@ -178,17 +178,24 @@ export class GameScene extends BasePlayScene {
                 : this.gameAreaX + 40;
             this.spaceship.x = Phaser.Math.Clamp(this.spaceship.x, pencilMinX, this.gameAreaX + this.gameAreaSize - 40);
 
-            const whiteBarBottom = this.gameAreaY + 85;
+            const playerAtTop = this.theme.playerPosition === 'top';
             this.laserGroup.getChildren().forEach((laser: Phaser.GameObjects.GameObject) => {
                 const laserSprite = laser as Phaser.Physics.Arcade.Image;
-                laserSprite.y -= 8;
+                if (playerAtTop) {
+                    laserSprite.y += 8;
+                } else {
+                    laserSprite.y -= 8;
+                }
 
                 this.physics.overlap(laserSprite, this.answerObjects, (_laserObj, asteroidObj) => {
                     const asteroid = asteroidObj as Phaser.Physics.Arcade.Image;
                     this.laserHitAsteroid(laserSprite, asteroid);
                 });
 
-                if (laserSprite.y < whiteBarBottom) {
+                const outOfBounds = playerAtTop
+                    ? laserSprite.y > this.bottomBarY
+                    : laserSprite.y < this.gameAreaY + 85;
+                if (outOfBounds) {
                     laserSprite.destroy();
                 }
             });
@@ -295,10 +302,13 @@ export class GameScene extends BasePlayScene {
         // Answer object physics group
         this.answerObjects = this.physics.add.group();
 
-        // Player avatar (spaceship / pencil) in bottom bar
+        // Player avatar — anchored to top or bottom bar depending on theme
+        const playerY = this.theme.playerPosition === 'top'
+            ? this.gameAreaY + this.barHeight - Math.floor(5 * this.scaleFactor)
+            : this.bottomBarY + this.bottomBarHeight - Math.floor(5 * this.scaleFactor);
         this.spaceship = this.add.image(
             this.gameAreaX + this.gameAreaSize / 2,
-            this.bottomBarY + this.bottomBarHeight - Math.floor(5 * this.scaleFactor),
+            playerY,
             'spaceship'
         ).setOrigin(0.5, 1).setScale(0.192 * this.scaleFactor).setDepth(1001);
 
@@ -462,10 +472,10 @@ export class GameScene extends BasePlayScene {
 
         // Spaceship
         if (this.spaceship) {
-            this.spaceship.setPosition(
-                this.gameAreaX + this.gameAreaSize / 2,
-                this.bottomBarY + this.bottomBarHeight - Math.floor(5 * this.scaleFactor)
-            );
+            const playerY = this.theme.playerPosition === 'top'
+                ? this.gameAreaY + this.barHeight - Math.floor(5 * this.scaleFactor)
+                : this.bottomBarY + this.bottomBarHeight - Math.floor(5 * this.scaleFactor);
+            this.spaceship.setPosition(this.gameAreaX + this.gameAreaSize / 2, playerY);
             this.spaceship.setScale(0.192 * this.scaleFactor);
             this.spaceship.setDepth(1001);
         }
@@ -1011,7 +1021,9 @@ export class GameScene extends BasePlayScene {
         laserGraphics.generateTexture(laserTextureKey, 8, 32);
         laserGraphics.destroy();
 
-        const laserY = this.spaceship.y - this.spaceship.displayHeight / 2;
+        const laserY = this.theme.playerPosition === 'top'
+            ? this.spaceship.y + this.spaceship.displayHeight / 2
+            : this.spaceship.y - this.spaceship.displayHeight / 2;
         const laserSprite = this.laserGroup.create(this.spaceship.x, laserY, laserTextureKey) as Phaser.Physics.Arcade.Image;
         laserSprite.setOrigin(0.5, 1);
         laserSprite.setDepth(300);

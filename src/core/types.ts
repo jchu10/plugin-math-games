@@ -41,7 +41,7 @@ export interface Response {
   isCorrect: boolean;
 }
 
-export type gameVersion = "MoonMissionGame" | "HomeworkHelperGame";
+export type gameVersion = "MoonMissionGame" | "HomeworkHelperGame" | "UnderwaterDiverGame";
 export type gameMechanic = 'flyingObjects' | 'dragAndDrop' | 'numberLine' | 'tilePicker';
 export type gameControls = "arrowKeys" | "tapToSelect";
 export type hintType = "none" | "powerup" | "stepByStep";
@@ -70,6 +70,7 @@ export interface GameTheme {
   answerLabelStrokeWidth: number;   // base stroke width for labels at 1080p
   answerLabelShadow: boolean;       // whether labels have a glow/shadow effect
   answerSpawnFromBottom: boolean;   // false = objects fall from top; true = rise from bottom
+  playerPosition?: 'top' | 'bottom'; // where the avatar is anchored; defaults to 'bottom'
   answerScaleRange: [number, number]; // [min, max] object scale
   answerDepth: number;              // render depth for answer objects
   welcomeTextColor: string;         // CSS colour for instruction text on the welcome screen
