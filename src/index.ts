@@ -97,7 +97,7 @@ const info = <const>{
     /** Optional custom question bank. Array of MathQuestion objects. When omitted, the built-in 30-question bank is used. */
     question_bank: {
       type: ParameterType.COMPLEX,
-      default: undefined,
+      default: null,
     },
     /** Optional callback function for real-time data emission to server (e.g., MongoDB via socket.io) */
     emit_data_callback: {

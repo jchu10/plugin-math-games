@@ -96,7 +96,7 @@ export abstract class BasePlayScene extends BaseGameScene {
     }
 
     create() {
-        this.questionService = new MathQuestionService(this.gameConfig.question_bank);
+        this.questionService = new MathQuestionService(this.gameConfig.question_bank ?? undefined);
 
         // Reset session state
         this.correctCount = 0;

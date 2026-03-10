@@ -83,7 +83,7 @@ export class MathQuestionService {
   }
 
   // Pick a random question from the current difficulty level
-  public pickRandomQuestion(): MathQuestion | undefined {
+  public pickRandomQuestion(): MathQuestion | null {
     const pool = this.filterByDifficulty(this.currentDifficulty);
     if (pool.length === 0) return undefined;
     return this.pickFromPool(pool, this.currentDifficulty);
