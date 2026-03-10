@@ -23,13 +23,6 @@
             console.log('Event emitted:', data);
         }
 
-        const stim = {
-            cover_story: "MoonMissionGame",
-            controls: "arrowKeys",
-            hint_type: "none",
-            feedback_type: "explosion"
-        }
-
         const configure_game = {
             type: jsPsychSurveyMultiChoice,
             // preamble: '<h3>Choose your desired math game configuration.</h3>',
@@ -60,20 +53,15 @@
                 }
             ],
             button_label: 'Start Game',
-            on_finish: function (data) {
-                stim.cover_story = data.response.cover_story;
-                stim.controls = data.response.controls;
-                stim.hint_type = data.response.hint_type;
-                stim.feedback_type = data.response.feedback_type;
-            }
         }
 
         var math_trials = {
             type: MathGamesPlugin,
-            cover_story: stim.cover_story,
-            controls: stim.controls,
-            hint_type: stim.hint_type,
-            feedback_type: stim.feedback_type,
+            cover_story: () => { return jsPsych.data.getLastTrialData().values()[0].response.cover_story },
+            controls: () => { return jsPsych.data.getLastTrialData().values()[0].response.controls },
+            hint_type: () => { return jsPsych.data.getLastTrialData().values()[0].response.hint_type },
+            feedback_type: () => { return jsPsych.data.getLastTrialData().values()[0].response.feedback_type },
+            // question_bank: 'default',
             prompt: "<h3>Your Math Game</h3>",
             game_size: [560, 900],
             max_trial_duration: 120 * 1000, // in ms
