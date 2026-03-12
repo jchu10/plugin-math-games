@@ -8,14 +8,14 @@
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@2.2.0"></script>
     <script src="https://unpkg.com/lodash@4.17.21"></script>
-    <script type="module" src="https://unpkg.com/plugin-math-games"></script>
+    <script src="https://unpkg.com/plugin-math-games"></script>
 </head>
 
 <body>
 
     <div id="jspsych-target"></div>
 
-    <script type="module">
+    <script>
         const jsPsych = initJsPsych({ display_element: 'jspsych-target', on_finish: () => jsPsych.data.displayData() });
 
         function emitData(data) {
