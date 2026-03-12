@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@2.2.0"></script>
     <script src="https://unpkg.com/lodash@4.17.21"></script>
+    <script type="module" src="https://unpkg.com/plugin-math-games"></script>
 </head>
 
 <body>
@@ -15,12 +16,10 @@
     <div id="jspsych-target"></div>
 
     <script type="module">
-        import MathGamesPlugin from '../src/index.ts';
-
         const jsPsych = initJsPsych({ display_element: 'jspsych-target', on_finish: () => jsPsych.data.displayData() });
 
         function emitData(data) {
-            console.log('Event emitted:', data);
+            // console.log('Event emitted:', data);
         }
 
         const configure_game = {
@@ -56,7 +55,7 @@
         }
 
         var math_trials = {
-            type: MathGamesPlugin,
+            type: jsPsychMathGames,
             cover_story: () => { return jsPsych.data.getLastTrialData().values()[0].response.cover_story },
             controls: () => { return jsPsych.data.getLastTrialData().values()[0].response.controls },
             hint_type: () => { return jsPsych.data.getLastTrialData().values()[0].response.hint_type },
