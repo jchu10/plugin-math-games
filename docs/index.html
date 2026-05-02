@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>jsPsych-math-games Example</title>
+    <script src="https://unpkg.com/jspsych@8.2.2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" />
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@2.2.0"></script>
+    <script src="https://unpkg.com/lodash@4.17.21"></script>
+    <script src="https://unpkg.com/plugin-math-games"></script>
+</head>
+
+<body>
+
+    <div id="jspsych-target"></div>
+
+    <script>
+        const jsPsych = initJsPsych({ display_element: 'jspsych-target', on_finish: () => jsPsych.data.displayData() });
+
+        function emitData(data) {
+            // console.log('Event emitted:', data);
+        }
+
+        const configure_game = {
+            type: jsPsychSurveyMultiChoice,
+            // preamble: '<h3>Choose your desired math game configuration.</h3>',
+            questions: [
+                {
+                    prompt: "<b>What cover story?</b>",
+                    name: 'cover_story',
+                    options: ['MoonMissionGame', 'HomeworkHelperGame'],
+                    required: true,
+                },
+                {
+                    prompt: "<b>What controls?</b>",
+                    name: 'controls',
+                    options: ['tapToSelect', 'arrowKeys'],
+                    required: true,
+                },
+                {
+                    prompt: "<b>What kind of feedback after each response?</b>",
+                    name: 'feedback_type',
+                    options: ['none', 'explosion', 'explanation'],
+                    required: true,
+                },
+                {
+                    prompt: "<b>What kinds of hints?</b>",
+                    name: 'hint_type',
+                    options: ['none', 'powerup', 'stepByStep'],
+                    required: true,
+                }
+            ],
+            button_label: 'Start Game',
+        }
+
+        var math_trials = {
+            type: jsPsychMathGames,
+            cover_story: () => { return jsPsych.data.getLastTrialData().values()[0].response.cover_story },
+            controls: () => { return jsPsych.data.getLastTrialData().values()[0].response.controls },
+            hint_type: () => { return jsPsych.data.getLastTrialData().values()[0].response.hint_type },
+            feedback_type: () => { return jsPsych.data.getLastTrialData().values()[0].response.feedback_type },
+            // question_bank: 'default',
+            prompt: "<h3>Your Math Game</h3>",
+            game_size: [560, 900],
+            max_trial_duration: 120 * 1000, // in ms
+            game_duration_limit: 30, // in seconds
+            show_countdown_trial_duration: true,
+            display_in_game_timer: false,
+            emit_data_callback: emitData,
+        }
+
+        jsPsych.run([configure_game, math_trials]);
+
+    </script>
+
+</body>
+
+</html>
