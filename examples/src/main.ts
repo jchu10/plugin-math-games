@@ -10,13 +10,15 @@ function emitData(data: unknown) {
     console.log('Game event:', data);
 }
 
+const GAME_SIZE: [number, number] = [600, 1000];
+
 const trial1 = {
     type: MathGamesPlugin,
     cover_story: 'MoonMissionGame',
     controls: 'arrowKeys',
     hint_type: 'none',
     feedback_type: 'explosion',
-    game_size: [600, 1000],
+    game_size: GAME_SIZE,
     prompt: '<h3>Math Game Trial 1 — Moon Mission (arrow keys)</h3>',
     game_duration_limit: 60,
     emit_data_callback: emitData,
@@ -28,7 +30,7 @@ const trial2 = {
     controls: 'tapToSelect',
     hint_type: 'powerup',
     feedback_type: 'explanation',
-    game_size: [600, 1000],
+    game_size: GAME_SIZE,
     prompt: '<h3>Math Game Trial 2 — Homework Helper (tap to select)</h3>',
     game_duration_limit: 60,
     emit_data_callback: emitData,
