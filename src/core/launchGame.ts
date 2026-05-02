@@ -31,7 +31,10 @@ export const launchGame = (containerId: string, config: GameConfig): Phaser.Game
             gamepad: false
         },
         loader: {
-            baseURL: '/assets/',
+            // In Vite dev/build: import.meta.env.BASE_URL reflects the configured base path
+            // (e.g. "/plugin-math-games/" on GitHub Pages). In other contexts (Rollup library
+            // build, plain script): import.meta.env is undefined, so we fall back to "/".
+            baseURL: ((import.meta as any).env?.BASE_URL ?? '/') + 'assets/',
         },
         scene: [GameWelcome, GameScene, GameOver], // Tell Phaser which scenes to use
     };

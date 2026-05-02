@@ -45,13 +45,16 @@ Or copy the built files from `dist/` after building:
 
 ## Development Commands
 
-| Command              | Description                              |
-| -------------------- | ---------------------------------------- |
-| `npm run dev`        | Start Vite dev server for local preview  |
-| `npm run build`      | Production build via Rollup              |
-| `npm run test`       | Run Jest tests                           |
-| `npm run test:watch` | Run tests in watch mode                  |
-| `npm run type-check` | TypeScript type checking                 |
+| Command                  | Description                                    |
+| ------------------------ | ---------------------------------------------- |
+| `npm run dev`            | Start Vite dev server (opens `dev/index.html`) |
+| `npm run dev:examples`   | Start examples demo site locally               |
+| `npm run build`          | Production library build via Rollup            |
+| `npm run build:examples` | Build examples demo site for GitHub Pages      |
+| `npm run preview:examples` | Preview the built examples site locally      |
+| `npm run test`           | Run Jest tests                                 |
+| `npm run test:watch`     | Run tests in watch mode                        |
+| `npm run type-check`     | TypeScript type checking                       |
 
 ## Publishing
 
@@ -71,33 +74,15 @@ To publish a new version to npm:
 
 ## Examples
 
-Example experiments are available in the `/examples` folder.
+Example experiments are available in the `/examples` folder. A live demo is deployed to [jchu10.github.io/plugin-math-games](https://jchu10.github.io/plugin-math-games/).
+
+## Documentation
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for project structure and contributor guidelines.
 
 ## Compatibility
 
 `plugin-math-games` requires jsPsych v8.0.0 or later.
-
-## Documentation
-
-See [documentation](/docs/plugin-math-games.md) for full API reference.
-
-## Troubleshooting
-
-### `npm install` fails with peer dependency errors
-
-Try using `npm install --legacy-peer-deps` or update to Node.js v24+.
-
-### Tests fail with `__PACKAGE_VERSION__ is not defined`
-
-This should be fixed in the latest version. If you see this error, ensure you have the latest `jest.config.cjs`.
-
-### Build fails with missing assets
-
-Ensure you have all files from `src/assets/`. If cloning fresh, these should be included in the repository.
-
-### `npm run dev` shows blank page
-
-Check the browser console for errors. Ensure all dependencies are installed with `npm install`.
 
 ## License
 
