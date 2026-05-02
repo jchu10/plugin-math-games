@@ -21,8 +21,11 @@
     "tsc": "tsc",
     "build": "rollup --config",
     "build:watch": "npm run build -- --watch",
+    "build:examples": "vite build --config examples/vite.config.ts",
     "type-check": "tsc --noEmit",
-    "dev": "vite"
+    "dev": "vite",
+    "dev:examples": "vite --config examples/vite.config.ts",
+    "preview:examples": "vite preview --config examples/vite.config.ts"
   },
   "repository": {
     "type": "git",

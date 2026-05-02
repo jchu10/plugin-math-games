@@ -19,13 +19,22 @@ configs.forEach((cfg) => {
         (dep) => dep !== "react" && dep !== "react-dom"
     );
 
+    cfg.onwarn = (warning, warn) => {
+        if (warning.plugin === 'esbuild' && warning.message.includes('duplicate-object-key')) return;
+        warn(warning);
+    };
+
     cfg.plugins = [
         resolve({ browser: true, extensions: [".js", ".ts", ".tsx"] }),
         replace({
             preventAssignment: true,
             values: {
                 "__PACKAGE_VERSION__": JSON.stringify(version),
-                "process.env.NODE_ENV": JSON.stringify("production")
+                "process.env.NODE_ENV": JSON.stringify("production"),
+                // Replace import.meta before esbuild sees it: in the Rollup library build
+                // import.meta is not available (es2015 target), so we substitute an empty
+                // object so the BASE_URL fallback of '/' is always used.
+                "import.meta": "({})",
             }
         }),
         postcss({ modules: false, extract: false, inject: true }),
