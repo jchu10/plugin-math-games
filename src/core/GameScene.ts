@@ -304,7 +304,7 @@ export class GameScene extends BasePlayScene {
 
         // Player avatar — anchored to top or bottom bar depending on theme
         const playerY = this.theme.playerPosition === 'top'
-            ? this.gameAreaY + this.barHeight - Math.floor(5 * this.scaleFactor)
+            ? this.gameAreaY + this.topOffset - Math.floor(5 * this.scaleFactor)
             : this.bottomBarY + this.bottomBarHeight - Math.floor(5 * this.scaleFactor);
         this.spaceship = this.add.image(
             this.gameAreaX + this.gameAreaSize / 2,
@@ -473,7 +473,7 @@ export class GameScene extends BasePlayScene {
         // Spaceship
         if (this.spaceship) {
             const playerY = this.theme.playerPosition === 'top'
-                ? this.gameAreaY + this.barHeight - Math.floor(5 * this.scaleFactor)
+                ? this.gameAreaY + this.topOffset - Math.floor(5 * this.scaleFactor)
                 : this.bottomBarY + this.bottomBarHeight - Math.floor(5 * this.scaleFactor);
             this.spaceship.setPosition(this.gameAreaX + this.gameAreaSize / 2, playerY);
             this.spaceship.setScale(0.192 * this.scaleFactor);
@@ -1067,7 +1067,7 @@ export class GameScene extends BasePlayScene {
 
             let visibleRatio = 1;
             if (this.theme.answerSpawnFromBottom) {
-                const clipEdge = this.gameAreaY + 60;
+                const clipEdge = this.gameAreaY + this.topOffset + this.barHeight;
                 if (objTop < clipEdge) {
                     const clipped = clipEdge - objTop;
                     visibleRatio = Math.max(0, (sprite.displayHeight - clipped) / sprite.displayHeight);

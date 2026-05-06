@@ -68,6 +68,7 @@ export abstract class BasePlayScene extends BaseGameScene {
     protected scaleFactor: number = 1;
     protected barHeight: number = 0;
     protected bottomBarHeight: number = 0;
+    protected topOffset: number = 0;
     protected bottomBarY: number = 0;
     protected heartY: number = 0;
     protected heartSize: number = 0;
@@ -134,9 +135,10 @@ export abstract class BasePlayScene extends BaseGameScene {
         this.scaleFactor = this.scale.height / 1080;
         this.barHeight = Math.floor(this.baseBarHeight * this.scaleFactor);
         this.bottomBarHeight = Math.floor(this.baseBottomBarHeight * this.scaleFactor);
+        this.topOffset = this.theme.playerPosition === 'top' ? this.bottomBarHeight : 0;
         this.bottomBarY = this.gameAreaY + this.gameAreaHeight - this.bottomBarHeight;
         this.heartSize = Math.round(this.barHeight * 0.65 * 1.05);
-        this.heartY = this.gameAreaY + this.barHeight + 24;
+        this.heartY = this.gameAreaY + this.topOffset + this.barHeight + 24;
 
         // White full-screen background behind game area
         this.whiteBackground = this.add.graphics();
@@ -160,7 +162,7 @@ export abstract class BasePlayScene extends BaseGameScene {
         // Top white HUD bar
         this.whiteBar = this.add.graphics();
         this.whiteBar.fillStyle(0xffffff, 1);
-        this.whiteBar.fillRect(this.gameAreaX, this.gameAreaY, this.gameAreaSize, this.barHeight);
+        this.whiteBar.fillRect(this.gameAreaX, this.gameAreaY, this.gameAreaSize, this.topOffset + this.barHeight);
         this.whiteBar.setDepth(1000);
 
         // Bottom white HUD bar
@@ -184,7 +186,7 @@ export abstract class BasePlayScene extends BaseGameScene {
         // End Game button (top-left of HUD bar)
         this.endBtn = this.add.text(
             this.gameAreaX + 30,
-            this.gameAreaY + this.barHeight / 2,
+            this.gameAreaY + this.topOffset + this.barHeight / 2,
             'End Game',
             { font: '22px Arial', color: '#ffffff', backgroundColor: '#2d3a4a', padding: { left: 16, right: 16, top: 8, bottom: 8 } }
         ).setOrigin(0, 0.5).setDepth(1002).setInteractive();
@@ -197,7 +199,7 @@ export abstract class BasePlayScene extends BaseGameScene {
             const sec = (timeLimit % 60).toString().padStart(2, '0');
             this.timerText = this.add.text(
                 this.gameAreaX + this.gameAreaSize - 30,
-                this.gameAreaY + this.barHeight / 2,
+                this.gameAreaY + this.topOffset + this.barHeight / 2,
                 `${min}:${sec}`,
                 { font: '28px monospace', color: '#000', fontStyle: 'bold' }
             ).setOrigin(1, 0.5).setDepth(1001);
@@ -206,7 +208,7 @@ export abstract class BasePlayScene extends BaseGameScene {
         // Question text (top-centre of HUD bar)
         this.questionText = this.add.text(
             this.gameAreaX + this.gameAreaSize / 2,
-            this.gameAreaY + this.barHeight / 2,
+            this.gameAreaY + this.topOffset + this.barHeight / 2,
             '',
             { font: '32px monospace', color: '#000', align: 'center' }
         ).setOrigin(0.5).setDepth(1003);
@@ -292,9 +294,10 @@ export abstract class BasePlayScene extends BaseGameScene {
         this.scaleFactor = this.scale.height / 1080;
         this.barHeight = Math.floor(this.baseBarHeight * this.scaleFactor);
         this.bottomBarHeight = Math.floor(this.baseBottomBarHeight * this.scaleFactor);
+        this.topOffset = this.theme.playerPosition === 'top' ? this.bottomBarHeight : 0;
         this.bottomBarY = this.gameAreaY + this.gameAreaHeight - this.bottomBarHeight;
         this.heartSize = Math.round(this.barHeight * 0.65 * 1.05);
-        this.heartY = this.gameAreaY + this.barHeight + Math.floor(24 * this.scaleFactor);
+        this.heartY = this.gameAreaY + this.topOffset + this.barHeight + Math.floor(24 * this.scaleFactor);
 
         if (this.whiteBackground) {
             this.whiteBackground.clear();
@@ -316,7 +319,7 @@ export abstract class BasePlayScene extends BaseGameScene {
         if (this.whiteBar) {
             this.whiteBar.clear();
             this.whiteBar.fillStyle(0xffffff, 1);
-            this.whiteBar.fillRect(this.gameAreaX, this.gameAreaY, this.gameAreaSize, this.barHeight);
+            this.whiteBar.fillRect(this.gameAreaX, this.gameAreaY, this.gameAreaSize, this.topOffset + this.barHeight);
         }
         if (this.bottomWhiteBar) {
             this.bottomWhiteBar.clear();
@@ -332,21 +335,21 @@ export abstract class BasePlayScene extends BaseGameScene {
         if (this.gameConfig.show_timer && this.timerText) {
             this.timerText.setPosition(
                 this.gameAreaX + this.gameAreaSize - Math.floor(30 * this.scaleFactor),
-                this.gameAreaY + this.barHeight / 2
+                this.gameAreaY + this.topOffset + this.barHeight / 2
             );
             this.timerText.setStyle({ fontSize: `${Math.floor(28 * this.scaleFactor)}px` });
         }
         if (this.questionText) {
             this.questionText.setPosition(
                 this.gameAreaX + this.gameAreaSize / 2,
-                this.gameAreaY + this.barHeight / 2
+                this.gameAreaY + this.topOffset + this.barHeight / 2
             );
             this.questionText.setStyle({ fontSize: `${Math.floor(this.baseFontSize * this.scaleFactor)}px` });
         }
         if (this.endBtn) {
             this.endBtn.setPosition(
                 this.gameAreaX + Math.floor(30 * this.scaleFactor),
-                this.gameAreaY + this.barHeight / 2
+                this.gameAreaY + this.topOffset + this.barHeight / 2
             );
             this.endBtn.setStyle({ fontSize: `${Math.floor(22 * this.scaleFactor)}px` });
         }

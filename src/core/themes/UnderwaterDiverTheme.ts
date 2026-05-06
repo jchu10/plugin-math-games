@@ -12,7 +12,7 @@ export const UnderwaterDiverTheme: GameTheme = {
     answerLabelFontSize: 34,
     answerLabelStrokeWidth: 8,
     answerLabelShadow: true,
-    answerSpawnFromBottom: false,
+    answerSpawnFromBottom: true,
     playerPosition: 'top',
     answerScaleRange: [0.20, 0.38],
     answerDepth: 120,
